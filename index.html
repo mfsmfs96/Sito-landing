@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Massimo & Lucrezia — 4 Luglio 2027</title>
+<meta name="description" content="Invito digitale di Massimo & Lucrezia.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="loader"><div class="loader-mark">M <span>&</span> L</div><div class="loader-bar"></div></div>
+
+<div class="ambient"></div>
+<header class="ui">
+  <button class="ui-menu" id="menuToggle" aria-label="Apri menu">
+    <span></span><span></span>
+  </button>
+</header>
+
+<nav class="menu" id="menu">
+  <button data-target="s1">01</button>
+  <button data-target="s2">02</button>
+  <button data-target="s3">03</button>
+  <button data-target="s4">04</button>
+  <button data-target="s5">05</button>
+</nav>
+
+<main id="experience">
+  <section class="scene" id="s1" aria-label="Sezione 01">
+    <div class="art"><img src="assets/section-01.jpg" alt="Massimo e Lucrezia — Palazzo dei Principi Lanza"></div>
+    <button class="hotspot hero-hotspot" data-target="s2" aria-label="Scorri alla sezione 02"></button>
+  </section>
+
+  <section class="scene" id="s2" aria-label="Sezione 02">
+    <div class="art"><img src="assets/section-02.jpg" alt="The Day"></div>
+    <button class="hotspot day-hotspot" data-target="s3" aria-label="Scorri alla sezione 03"></button>
+  </section>
+
+  <section class="scene" id="s3" aria-label="Sezione 03">
+    <div class="art"><img src="assets/section-03.jpg" alt="The Location — Convento dei Minimi"></div>
+    <button class="hotspot location-hotspot" data-target="s4" aria-label="Scorri alla sezione 04"></button>
+  </section>
+
+  <section class="scene" id="s4" aria-label="Sezione 04">
+    <div class="art"><img src="assets/section-04.jpg" alt="Details"></div>
+    <button class="hotspot details-hotspot" data-target="s5" aria-label="Scorri alla sezione 05"></button>
+  </section>
+
+  <section class="scene" id="s5" aria-label="Sezione 05">
+    <div class="art"><img src="assets/section-05.jpg" alt="RSVP"></div>
+    <button class="hotspot rsvp-hotspot" id="rsvp" aria-label="Conferma ora"></button>
+  </section>
+</main>
+
+<div class="progress"><i id="progress"></i></div>
+<div class="hint" id="hint">SCORRI PER ESPLORARE</div>
+
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <button class="close" id="close">×</button>
+    <div class="modal-eyebrow">RSVP</div>
+    <h2>Conferma ora</h2>
+    <p>La tua presenza renderà ancora più speciale il 4 luglio 2027.</p>
+    <form id="form">
+      <input required placeholder="Nome e cognome">
+      <select required>
+        <option value="">Sarete dei nostri?</option>
+        <option>Sì, con piacere</option>
+        <option>Ci dispiace, non potremo esserci</option>
+      </select>
+      <button type="submit">INVIA</button>
+    </form>
+    <small>Modulo dimostrativo: collegalo a Google Forms, Formspree o a un tuo endpoint.</small>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
