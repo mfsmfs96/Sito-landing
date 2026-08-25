@@ -474,24 +474,80 @@ function renderNewsSkeleton(listEl,count=6){
     </li>
   `).join("");
 }
-function companyBadges(title){
-  const companies=tagCompanies(title);
+function tvSymbolUrl(symbol){
+  return `https://www.tradingview.com/symbols/${encodeURIComponent(symbol.replace(":","-").replace(".",""))}/`;
+}
+function companyBadgesHTML(companies){
   if(!companies.length)return"";
   return `<div class="company-tags">`+companies.map(c=>
-    `<a class="company-tag" href="https://www.tradingview.com/symbols/${encodeURIComponent(c.symbol.replace(":","-").replace(".",""))}/" target="_blank" rel="noopener noreferrer" title="Vedi quotazione ${c.name}">${c.name}</a>`
+    `<a class="company-tag" href="${tvSymbolUrl(c.symbol)}" target="_blank" rel="noopener noreferrer" title="Vedi quotazione ${c.name}">${c.name}</a>`
   ).join("")+`</div>`;
 }
-function renderNewsList(listEl,items){
-  listEl.innerHTML=items.slice(0,24).map(item=>`
+
+/* ---------- Financing-concept heuristic (a starting hypothesis for the analyst, not a proposal) ---------- */
+const FINANCING_RULES=[
+  {test:(t,hasCo)=>hasCo&&/bond|debt|refinanc|notes payable|syndicated loan/.test(t),label:"Obbligazionario / Prestito sindacato",note:"possibile rifinanziamento del debito di un emittente noto"},
+  {test:t=>/acquisition|acquire|acquisizione|merger|stake in/.test(t),label:"Acquisition Finance",note:"leva per M&A o acquisizione di quota"},
+  {test:t=>/export|foreign military sale|\bfms\b|international sale/.test(t),label:"Export Finance (ECA-backed)",note:"vendita estera, possibile garanzia export credit agency"},
+  {test:(t,hasCo)=>!hasCo&&/contract|deal|award|order|procurement|tender|contratto|commessa|appalto/.test(t),label:"Trade / Receivables Finance",note:"possibile subfornitore su commessa pubblica: fabbisogno di capitale circolante"},
+  {test:t=>/invest|funding|expansion|capacity|new plant|new factory|new facility|espansione|nuovo impianto/.test(t),label:"Capex / Project Finance",note:"espansione della capacità produttiva"}
+];
+function suggestFinancingConcept(title,hasCompany){
+  const t=title.toLowerCase();
+  const rule=FINANCING_RULES.find(r=>r.test(t,hasCompany));
+  return rule||{label:"Working Capital / Supply Chain Finance",note:"ipotesi generica per notizie di commessa o contratto"};
+}
+function conceptTagHTML(item,companies){
+  if(!isDealNews(item.title))return"";
+  const c=suggestFinancingConcept(item.title,companies.length>0);
+  return `<div class="concept-tag"><span class="concept-label">${c.label}</span><span class="concept-note">${c.note}</span></div>`;
+}
+
+/* ---------- Personal watchlist (localStorage, per-browser) ---------- */
+const WATCHLIST_KEY="pulse-watchlist";
+const itemsByUrl=new Map();
+function getWatchlist(){try{return JSON.parse(localStorage.getItem(WATCHLIST_KEY)||"[]")}catch(e){return[]}}
+function isWatched(url){return getWatchlist().some(w=>w.url===url)}
+function toggleWatch(item){
+  let list=getWatchlist();
+  if(list.some(w=>w.url===item.url))list=list.filter(w=>w.url!==item.url);
+  else list.unshift({url:item.url,title:item.title,source:item.source,date:item.date});
+  try{localStorage.setItem(WATCHLIST_KEY,JSON.stringify(list.slice(0,100)))}catch(e){}
+}
+function escapeAttr(s){return s.replace(/"/g,"&quot;")}
+document.addEventListener("click",e=>{
+  const btn=e.target.closest(".star-btn");
+  if(!btn)return;
+  e.preventDefault();
+  const url=btn.dataset.url;
+  const item=itemsByUrl.get(url);
+  if(!item)return;
+  toggleWatch(item);
+  const nowWatched=isWatched(url);
+  document.querySelectorAll(`.star-btn[data-url="${CSS.escape(url)}"]`).forEach(b=>{
+    b.classList.toggle("watched",nowWatched);
+    b.textContent=nowWatched?"★":"☆";
+  });
+  if(typeof renderWatchlist==="function")renderWatchlist();
+});
+
+function renderNewsList(listEl,items,opts={}){
+  items.forEach(it=>itemsByUrl.set(it.url,it));
+  listEl.innerHTML=items.slice(0,24).map(item=>{
+    const companies=tagCompanies(item.title);
+    const watched=isWatched(item.url);
+    return `
     <li class="news-item">
+      <button class="star-btn ${watched?"watched":""}" data-url="${escapeAttr(item.url)}" title="Salva in watchlist">${watched?"★":"☆"}</button>
       <a href="${item.url}" target="_blank" rel="noopener noreferrer">${item.title}</a>
       <div class="meta">
         <span class="src">${item.source}</span><span>${timeAgo(item.date)}</span>
         ${isDealNews(item.title)?'<span class="deal-badge">DEAL</span>':""}
       </div>
-      ${companyBadges(item.title)}
-    </li>
-  `).join("");
+      ${companyBadgesHTML(companies)}
+      ${opts.showConcept?conceptTagHTML(item,companies):""}
+    </li>`;
+  }).join("");
 }
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function fetchOne(feed,attempt=0){
@@ -632,16 +688,77 @@ function renderDeals(listEl,items){
     renderEmptyState(listEl,"Nessuna notizia di contratti/deal rilevata al momento.");
     return;
   }
-  renderNewsList(listEl,deals);
+  renderNewsList(listEl,deals,{showConcept:true});
 }
+function renderSupplyChain(listEl,items){
+  const candidates=items
+    .filter(it=>isDealNews(it.title)&&tagCompanies(it.title).length===0)
+    .sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(!candidates.length){
+    renderEmptyState(listEl,"Nessun possibile subfornitore rilevato al momento.");
+    return;
+  }
+  renderNewsList(listEl,candidates,{showConcept:true});
+}
+function renderWatchlist(){
+  const listEl=document.querySelector("#watchlistList");
+  if(!listEl)return;
+  const items=getWatchlist();
+  if(!items.length){
+    renderEmptyState(listEl,"Nessun elemento salvato. Clicca la stella ☆ su una notizia per aggiungerla qui.");
+    return;
+  }
+  renderNewsList(listEl,items);
+}
+
+/* ---------- Company directory & fundamentals modal ---------- */
+const companyDirectory=document.querySelector("#companyDirectory");
+if(companyDirectory){
+  companyDirectory.innerHTML=DEFENSE_COMPANIES.map(c=>
+    `<button class="company-dir-item" data-symbol="${c.symbol}" data-name="${escapeAttr(c.name)}">${c.name}</button>`
+  ).join("");
+}
+const companyModal=document.querySelector("#companyModal");
+const companyModalName=document.querySelector("#companyModalName");
+const companyModalWidgets=document.querySelector("#companyModalWidgets");
+function openCompanyModal(symbol,name){
+  companyModalName.textContent=name;
+  companyModalWidgets.innerHTML="";
+  const infoDiv=document.createElement("div");
+  infoDiv.className="tv-widget-card";
+  infoDiv.style.height="140px";
+  const finDiv=document.createElement("div");
+  finDiv.className="tv-widget-card";
+  finDiv.style.height="420px";
+  companyModalWidgets.appendChild(infoDiv);
+  companyModalWidgets.appendChild(finDiv);
+  const theme=effectiveTheme();
+  mountTradingViewWidget(infoDiv,"https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js",{
+    symbol,colorTheme:theme,isTransparent:true,locale:"it",width:"100%"
+  });
+  mountTradingViewWidget(finDiv,"https://s3.tradingview.com/external-embedding/embed-widget-financials.js",{
+    symbol,colorTheme:theme,isTransparent:true,displayMode:"adaptive",locale:"it",width:"100%",height:"100%"
+  });
+  companyModal.classList.add("show");
+}
+document.querySelector("#companyModalClose")?.addEventListener("click",()=>companyModal.classList.remove("show"));
+companyModal?.addEventListener("click",e=>{if(e.target===companyModal)companyModal.classList.remove("show")});
+companyDirectory?.addEventListener("click",e=>{
+  const btn=e.target.closest(".company-dir-item");
+  if(btn)openCompanyModal(btn.dataset.symbol,btn.dataset.name);
+});
+
 const trendList=document.querySelector("#trendList");
 const dealsList=document.querySelector("#dealsList");
+const supplyChainList=document.querySelector("#supplyChainList");
 const radarUpdated=document.querySelector("#radarUpdated");
 async function loadRadar(){
   await Promise.all(["generale","militari","armamenti","tecnologia"].map(loadCategoryNews));
   const items=gatherAllNewsItems();
   renderTrending(trendList,items);
   renderDeals(dealsList,items);
+  renderSupplyChain(supplyChainList,items);
+  renderWatchlist();
   radarUpdated.textContent="aggiornato "+new Date().toLocaleTimeString("it-IT");
 }
 setInterval(()=>{if(currentTab==="radar")loadRadar()},NEWS_REFRESH_MS);
