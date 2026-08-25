@@ -10,18 +10,21 @@ function applyTheme(t){
   if(t)document.documentElement.setAttribute("data-theme",t);
   else document.documentElement.removeAttribute("data-theme");
 }
+function effectiveTheme(){
+  return savedTheme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");
+}
 let savedTheme=store.get("pulse-theme","");
 applyTheme(savedTheme);
 themeToggle.addEventListener("click",()=>{
-  const prefersDark=matchMedia("(prefers-color-scheme:dark)").matches;
-  const current=savedTheme||(prefersDark?"dark":"light");
+  const current=effectiveTheme();
   savedTheme=current==="dark"?"light":"dark";
   store.set("pulse-theme",savedTheme);
   applyTheme(savedTheme);
+  buildTradingViewWidgets();
 });
 
 /* ---------- Tabs ---------- */
-const TABS=["crypto","news","tv","map"];
+const TABS=["mercati","news","tv","map"];
 function activateTab(tab,persist=true){
   if(!TABS.includes(tab))return;
   document.querySelectorAll("#tabs .tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
@@ -31,7 +34,86 @@ function activateTab(tab,persist=true){
 document.querySelectorAll("#tabs .tab").forEach(btn=>{
   btn.addEventListener("click",()=>activateTab(btn.dataset.tab));
 });
-activateTab(store.get("pulse-tab","crypto"),false);
+activateTab(store.get("pulse-tab","mercati"),false);
+
+/* ---------- TradingView widgets (indices, commodities, per-exchange movers) ---------- */
+function mountTradingViewWidget(container,scriptSrc,config){
+  container.innerHTML="";
+  const wrap=document.createElement("div");
+  wrap.className="tradingview-widget-container";
+  wrap.style.height="100%";
+  wrap.style.width="100%";
+  const inner=document.createElement("div");
+  inner.className="tradingview-widget-container__widget";
+  inner.style.height="100%";
+  inner.style.width="100%";
+  wrap.appendChild(inner);
+  const script=document.createElement("script");
+  script.type="text/javascript";
+  script.src=scriptSrc;
+  script.async=true;
+  script.text=JSON.stringify(config);
+  wrap.appendChild(script);
+  container.appendChild(wrap);
+}
+
+function buildTradingViewWidgets(){
+  const theme=effectiveTheme();
+
+  mountTradingViewWidget(
+    document.querySelector("#tvMarketOverview"),
+    "https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js",
+    {
+      colorTheme:theme,
+      dateRange:"1D",
+      showChart:false,
+      locale:"it",
+      isTransparent:true,
+      showSymbolLogo:true,
+      showFloatingTooltip:true,
+      width:"100%",
+      height:"100%",
+      tabs:[
+        {title:"Indici",symbols:[
+          {s:"INDEX:FTSEMIB",d:"FTSE MIB"},
+          {s:"EURONEXT:PX1",d:"CAC 40"},
+          {s:"TVC:UKX",d:"FTSE 100"},
+          {s:"FOREXCOM:DJI",d:"Dow Jones"},
+          {s:"FOREXCOM:SPXUSD",d:"S&P 500"},
+          {s:"FOREXCOM:NSXUSD",d:"Nasdaq 100"},
+          {s:"TVC:HSI",d:"Hang Seng"}
+        ]},
+        {title:"Materie prime",symbols:[
+          {s:"TVC:GOLD",d:"Oro"},
+          {s:"TVC:SILVER",d:"Argento"},
+          {s:"TVC:USOIL",d:"Petrolio WTI"},
+          {s:"TVC:UKOIL",d:"Petrolio Brent"},
+          {s:"TVC:NATURALGAS",d:"Gas naturale"},
+          {s:"TVC:COPPER",d:"Rame"}
+        ]}
+      ]
+    }
+  );
+
+  document.querySelectorAll(".tv-widget-card[data-exchange]").forEach(container=>{
+    mountTradingViewWidget(
+      container,
+      "https://s3.tradingview.com/external-embedding/embed-widget-screener.js",
+      {
+        width:"100%",
+        height:"100%",
+        defaultColumn:"performance",
+        defaultScreen:"general",
+        market:container.dataset.exchange,
+        showToolbar:true,
+        colorTheme:theme,
+        locale:"it",
+        isTransparent:true
+      }
+    );
+  });
+}
+buildTradingViewWidgets();
 
 /* ---------- Clock ---------- */
 const clock=document.querySelector("#clock");

@@ -21,7 +21,7 @@
   <div class="navbar-inner">
     <span class="brand">Pulse</span>
     <nav class="tabs" id="tabs">
-      <button class="tab active" data-tab="crypto">Crypto</button>
+      <button class="tab active" data-tab="mercati">Mercati</button>
       <button class="tab" data-tab="news">Notizie</button>
       <button class="tab" data-tab="tv">TV Live</button>
       <button class="tab" data-tab="map">Mappa</button>
@@ -42,9 +42,15 @@
 
 <main class="content">
 
-  <section id="tab-crypto" class="tabpanel active">
+  <section id="tab-mercati" class="tabpanel active">
     <div class="section-head">
-      <h1>Mercato crypto</h1>
+      <h1>Indici &amp; materie prime</h1>
+      <span class="muted">Piazza Affari, Parigi, Londra, New York, Hong Kong</span>
+    </div>
+    <div class="tv-widget-card" id="tvMarketOverview"></div>
+
+    <div class="section-head" style="margin-top:40px">
+      <h1>Crypto</h1>
       <span class="live-pill" id="marketStatus">Connessione…</span>
     </div>
     <div class="gauge-card" id="fngCard">
@@ -63,6 +69,19 @@
       </div>
     </div>
     <div id="priceGrid" class="price-grid"></div>
+
+    <div class="section-head" style="margin-top:40px">
+      <h1>Titoli del giorno</h1>
+      <span class="muted">Clicca l'intestazione "% Var." in ogni tabella per ordinare dal migliore al peggiore</span>
+    </div>
+    <div class="exchange-grid" id="exchangeGrid">
+      <div class="exchange-card"><h3>Piazza Affari <small>Milano</small></h3><div class="tv-widget-card" data-exchange="italy"></div></div>
+      <div class="exchange-card"><h3>Parigi <small>Euronext</small></h3><div class="tv-widget-card" data-exchange="france"></div></div>
+      <div class="exchange-card"><h3>Londra <small>LSE</small></h3><div class="tv-widget-card" data-exchange="uk"></div></div>
+      <div class="exchange-card"><h3>New York <small>NYSE/Nasdaq</small></h3><div class="tv-widget-card" data-exchange="america"></div></div>
+      <div class="exchange-card"><h3>Hong Kong <small>HKEX</small></h3><div class="tv-widget-card" data-exchange="hongkong"></div></div>
+    </div>
+    <p class="tv-note">Dati di mercato forniti da TradingView.</p>
   </section>
 
   <section id="tab-news" class="tabpanel">
