@@ -180,6 +180,16 @@ body{
 .news-item .meta{display:flex;gap:8px;margin-top:8px;font-size:12px;color:var(--muted)}
 .news-item .meta .src{color:var(--accent);font-weight:600}
 
+/* TradingView widget cards */
+.tv-widget-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);overflow:hidden;height:420px;
+}
+.exchange-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.exchange-card h3{font-size:15px;font-weight:600;margin:0 0 8px;display:flex;align-items:baseline;gap:6px}
+.exchange-card h3 small{font-weight:400;color:var(--muted);font-size:12px}
+.exchange-card .tv-widget-card{height:440px}
+
 /* TV Live */
 .tv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
 .tv-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}

@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pulse — Mercati, notizie e TV in tempo reale</title>
-<meta name="description" content="Prezzi crypto in tempo reale, notizie di finanza e politica, TV in diretta e mappa del mondo interattiva.">
-<meta property="og:title" content="Pulse — Mercati, notizie e TV in tempo reale">
-<meta property="og:description" content="Prezzi crypto in tempo reale, notizie di finanza e politica, TV in diretta e mappa del mondo interattiva.">
+<title>Pulse — Difesa, sicurezza e mercati in tempo reale</title>
+<meta name="description" content="Notizie di difesa, sicurezza, affari militari, armamenti e tecnologia militare da fonti internazionali, mappa del mondo interattiva, prezzi crypto e TV in diretta.">
+<meta property="og:title" content="Pulse — Difesa, sicurezza e mercati in tempo reale">
+<meta property="og:description" content="Notizie di difesa, sicurezza, affari militari, armamenti e tecnologia militare da fonti internazionali, mappa del mondo interattiva, prezzi crypto e TV in diretta.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#0071e3">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -21,7 +21,7 @@
   <div class="navbar-inner">
     <span class="brand">Pulse</span>
     <nav class="tabs" id="tabs">
-      <button class="tab active" data-tab="crypto">Crypto</button>
+      <button class="tab active" data-tab="mercati">Mercati</button>
       <button class="tab" data-tab="news">Notizie</button>
       <button class="tab" data-tab="tv">TV Live</button>
       <button class="tab" data-tab="map">Mappa</button>
@@ -42,9 +42,15 @@
 
 <main class="content">
 
-  <section id="tab-crypto" class="tabpanel active">
+  <section id="tab-mercati" class="tabpanel active">
     <div class="section-head">
-      <h1>Mercato crypto</h1>
+      <h1>Indici &amp; materie prime</h1>
+      <span class="muted">Piazza Affari, Parigi, Londra, New York, Hong Kong</span>
+    </div>
+    <div class="tv-widget-card" id="tvMarketOverview"></div>
+
+    <div class="section-head" style="margin-top:40px">
+      <h1>Crypto</h1>
       <span class="live-pill" id="marketStatus">Connessione…</span>
     </div>
     <div class="gauge-card" id="fngCard">
@@ -63,17 +69,31 @@
       </div>
     </div>
     <div id="priceGrid" class="price-grid"></div>
+
+    <div class="section-head" style="margin-top:40px">
+      <h1>Titoli del giorno</h1>
+      <span class="muted">Clicca l'intestazione "% Var." in ogni tabella per ordinare dal migliore al peggiore</span>
+    </div>
+    <div class="exchange-grid" id="exchangeGrid">
+      <div class="exchange-card"><h3>Piazza Affari <small>Milano</small></h3><div class="tv-widget-card" data-exchange="italy"></div></div>
+      <div class="exchange-card"><h3>Parigi <small>Euronext</small></h3><div class="tv-widget-card" data-exchange="france"></div></div>
+      <div class="exchange-card"><h3>Londra <small>LSE</small></h3><div class="tv-widget-card" data-exchange="uk"></div></div>
+      <div class="exchange-card"><h3>New York <small>NYSE/Nasdaq</small></h3><div class="tv-widget-card" data-exchange="america"></div></div>
+      <div class="exchange-card"><h3>Hong Kong <small>HKEX</small></h3><div class="tv-widget-card" data-exchange="hongkong"></div></div>
+    </div>
+    <p class="tv-note">Dati di mercato forniti da TradingView.</p>
   </section>
 
   <section id="tab-news" class="tabpanel">
     <div class="section-head">
-      <h1>Notizie</h1>
+      <h1>Difesa &amp; Sicurezza</h1>
       <span class="muted" id="newsUpdated">in aggiornamento…</span>
     </div>
     <div class="segmented" id="newsCategoryTabs">
-      <button class="seg active" data-cat="crypto">Crypto</button>
-      <button class="seg" data-cat="politica">Politica</button>
-      <button class="seg" data-cat="mercati">Mercati finanziari</button>
+      <button class="seg active" data-cat="generale">Generale</button>
+      <button class="seg" data-cat="militari">Affari militari</button>
+      <button class="seg" data-cat="armamenti">Armamenti</button>
+      <button class="seg" data-cat="tecnologia">Tecnologia militare</button>
     </div>
     <ul id="newsList" class="news-list"></ul>
   </section>
@@ -118,7 +138,7 @@
   <section id="tab-map" class="tabpanel">
     <div class="section-head">
       <h1>Mappa del mondo</h1>
-      <span class="muted">Clicca un'area per le notizie in tempo reale</span>
+      <span class="muted">Clicca un'area per le notizie di difesa e sicurezza in tempo reale</span>
     </div>
     <div class="region-pills" id="regionPills">
       <button class="pill active" data-region="it">Italia</button>
@@ -133,7 +153,7 @@
     <div class="map-wrap" id="mapWrap" aria-label="Mappa del mondo interattiva"></div>
     <p class="map-credit">Mappa: <a href="https://github.com/cablop/simple-world-map-by-continents" target="_blank" rel="noopener noreferrer">Simple World Map</a> di Al MacDonald &amp; Fritz Lekschas · CC BY-SA 3.0</p>
     <div class="section-head">
-      <h2 id="mapNewsTitle">Notizie — Italia</h2>
+      <h2 id="mapNewsTitle">Difesa &amp; sicurezza — Italia</h2>
       <span class="muted" id="mapNewsUpdated"></span>
     </div>
     <ul id="mapNewsList" class="news-list"></ul>
@@ -142,7 +162,7 @@
 </main>
 
 <footer class="foot">
-  Prezzi via Coinbase WebSocket (fallback CoinGecko) · Notizie da CoinDesk, Cointelegraph, ANSA, Il Sole 24 Ore e Google News · Aggiornamento automatico
+  Prezzi via Coinbase WebSocket (fallback CoinGecko) · Notizie difesa da Defense News, Breaking Defense, The War Zone, Naval News, Defense One, Air &amp; Space Forces Magazine, The Aviationist, Analisi Difesa e Google News (IT/EN) · Aggiornamento automatico
 </footer>
 
 <div class="modal-overlay" id="coinModal">

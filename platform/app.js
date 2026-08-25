@@ -10,18 +10,21 @@ function applyTheme(t){
   if(t)document.documentElement.setAttribute("data-theme",t);
   else document.documentElement.removeAttribute("data-theme");
 }
+function effectiveTheme(){
+  return savedTheme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");
+}
 let savedTheme=store.get("pulse-theme","");
 applyTheme(savedTheme);
 themeToggle.addEventListener("click",()=>{
-  const prefersDark=matchMedia("(prefers-color-scheme:dark)").matches;
-  const current=savedTheme||(prefersDark?"dark":"light");
+  const current=effectiveTheme();
   savedTheme=current==="dark"?"light":"dark";
   store.set("pulse-theme",savedTheme);
   applyTheme(savedTheme);
+  buildTradingViewWidgets();
 });
 
 /* ---------- Tabs ---------- */
-const TABS=["crypto","news","tv","map"];
+const TABS=["mercati","news","tv","map"];
 function activateTab(tab,persist=true){
   if(!TABS.includes(tab))return;
   document.querySelectorAll("#tabs .tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
@@ -31,7 +34,86 @@ function activateTab(tab,persist=true){
 document.querySelectorAll("#tabs .tab").forEach(btn=>{
   btn.addEventListener("click",()=>activateTab(btn.dataset.tab));
 });
-activateTab(store.get("pulse-tab","crypto"),false);
+activateTab(store.get("pulse-tab","mercati"),false);
+
+/* ---------- TradingView widgets (indices, commodities, per-exchange movers) ---------- */
+function mountTradingViewWidget(container,scriptSrc,config){
+  container.innerHTML="";
+  const wrap=document.createElement("div");
+  wrap.className="tradingview-widget-container";
+  wrap.style.height="100%";
+  wrap.style.width="100%";
+  const inner=document.createElement("div");
+  inner.className="tradingview-widget-container__widget";
+  inner.style.height="100%";
+  inner.style.width="100%";
+  wrap.appendChild(inner);
+  const script=document.createElement("script");
+  script.type="text/javascript";
+  script.src=scriptSrc;
+  script.async=true;
+  script.text=JSON.stringify(config);
+  wrap.appendChild(script);
+  container.appendChild(wrap);
+}
+
+function buildTradingViewWidgets(){
+  const theme=effectiveTheme();
+
+  mountTradingViewWidget(
+    document.querySelector("#tvMarketOverview"),
+    "https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js",
+    {
+      colorTheme:theme,
+      dateRange:"1D",
+      showChart:false,
+      locale:"it",
+      isTransparent:true,
+      showSymbolLogo:true,
+      showFloatingTooltip:true,
+      width:"100%",
+      height:"100%",
+      tabs:[
+        {title:"Indici",symbols:[
+          {s:"INDEX:FTSEMIB",d:"FTSE MIB"},
+          {s:"EURONEXT:PX1",d:"CAC 40"},
+          {s:"TVC:UKX",d:"FTSE 100"},
+          {s:"FOREXCOM:DJI",d:"Dow Jones"},
+          {s:"FOREXCOM:SPXUSD",d:"S&P 500"},
+          {s:"FOREXCOM:NSXUSD",d:"Nasdaq 100"},
+          {s:"TVC:HSI",d:"Hang Seng"}
+        ]},
+        {title:"Materie prime",symbols:[
+          {s:"TVC:GOLD",d:"Oro"},
+          {s:"TVC:SILVER",d:"Argento"},
+          {s:"TVC:USOIL",d:"Petrolio WTI"},
+          {s:"TVC:UKOIL",d:"Petrolio Brent"},
+          {s:"TVC:NATURALGAS",d:"Gas naturale"},
+          {s:"TVC:COPPER",d:"Rame"}
+        ]}
+      ]
+    }
+  );
+
+  document.querySelectorAll(".tv-widget-card[data-exchange]").forEach(container=>{
+    mountTradingViewWidget(
+      container,
+      "https://s3.tradingview.com/external-embedding/embed-widget-screener.js",
+      {
+        width:"100%",
+        height:"100%",
+        defaultColumn:"performance",
+        defaultScreen:"general",
+        market:container.dataset.exchange,
+        showToolbar:true,
+        colorTheme:theme,
+        locale:"it",
+        isTransparent:true
+      }
+    );
+  });
+}
+buildTradingViewWidgets();
 
 /* ---------- Clock ---------- */
 const clock=document.querySelector("#clock");
@@ -297,23 +379,42 @@ function openCoinModal(sym){
   coinModal.classList.add("show");
 }
 
-/* ---------- News (rss2json bridge, feeds per category) ---------- */
+/* ---------- News (rss2json bridge, defense/security focus) ---------- */
 const RSS2JSON="https://api.rss2json.com/v1/api.json?rss_url=";
 const NEWS_REFRESH_MS=3*60*1000;
 
-const CATEGORY_FEEDS={
-  crypto:[
-    "https://www.coindesk.com/arc/outboundfeeds/rss/",
-    "https://cointelegraph.com/rss"
-  ],
-  politica:[
-    "https://www.ansa.it/sito/notizie/politica/politica_rss.xml",
-    "https://news.google.com/rss/search?q=politica&hl=it&gl=IT&ceid=IT:it"
-  ],
-  mercati:[
-    "https://www.ilsole24ore.com/rss/finanza.xml",
-    "https://news.google.com/rss/search?q=mercati%20finanziari%20borsa&hl=it&gl=IT&ceid=IT:it"
-  ]
+function googleNewsUrl(query,lang){
+  const q=encodeURIComponent(query);
+  return lang==="en"
+    ?`https://news.google.com/rss/search?q=${q}&hl=en-US&gl=US&ceid=US:en`
+    :`https://news.google.com/rss/search?q=${q}&hl=it&gl=IT&ceid=IT:it`;
+}
+
+/* Curated international + Italian defense/security outlets (fetched once, shared across categories) */
+const CURATED_DEFENSE_FEEDS=[
+  "https://www.defensenews.com/arc/outboundfeeds/rss/",
+  "https://breakingdefense.com/feed/",
+  "https://www.twz.com/feed",
+  "https://www.navalnews.com/feed/",
+  "https://www.defenseone.com/rss/all/",
+  "https://www.airandspaceforces.com/feed/",
+  "https://theaviationist.com/feed/",
+  "https://www.analisidifesa.it/feed/"
+];
+
+/* Extra Google News queries (IT + EN) that supplement each tab's coverage */
+const CATEGORY_QUERIES={
+  generale:[["difesa sicurezza militare mondo","it"],["defense security military world","en"]],
+  militari:[["affari militari esercito forze armate NATO","it"],["military affairs armed forces NATO alliance","en"]],
+  armamenti:[["armamenti missili armi carri armati vendita di armi","it"],["weapons missiles arms deal fighter jet tank","en"]],
+  tecnologia:[["tecnologia militare droni intelligenza artificiale ipersonico","it"],["military technology drone hypersonic AI cyber defense","en"]]
+};
+
+/* Keywords used to bucket the curated pool into each sub-topic */
+const CATEGORY_KEYWORDS={
+  militari:["nato","alliance","alleanza","deployment","dispiegamento","exercise","esercitazione","budget","bilancio","treaty","trattato","sanction","sanzioni","troop","truppe","ministry","ministero","parliament","parlamento","summit","vertice","personnel","recruit","veteran","alliance"],
+  armamenti:["missile","tank","carro armato","jet","caccia","fighter","submarine","sommergibile","frigate","fregata","destroyer","rifle","fucile","artillery","artiglieria","howitzer","warhead","testata","ammunition","munizioni","arms deal","weapon","arma","armi"],
+  tecnologia:["drone","droni","artificial intelligence","intelligenza artificiale","cyber","satellite","space force","spaziali","hypersonic","ipersonico","radar","stealth","furtivo","quantum","quantistico","robot","autonomous","autonomo","laser"]
 };
 
 function timeAgo(dateStr){
@@ -342,30 +443,63 @@ function renderNewsList(listEl,items){
     </li>
   `).join("");
 }
+async function fetchOne(feed,retried){
+  try{
+    const res=await fetch(RSS2JSON+encodeURIComponent(feed));
+    const data=await res.json();
+    if(data.status!=="ok")throw new Error(data.message||"bad feed");
+    return data.items.map(it=>({title:it.title,url:it.link,date:it.pubDate,source:hostFromUrl(it.link)}));
+  }catch(e){
+    if(!retried){await new Promise(r=>setTimeout(r,1200));return fetchOne(feed,true)}
+    return[];
+  }
+}
 async function fetchFeeds(feeds){
-  const results=await Promise.allSettled(
-    feeds.map(feed=>fetch(RSS2JSON+encodeURIComponent(feed)).then(r=>r.json()))
-  );
-  let items=[];
-  results.forEach(r=>{
-    if(r.status==="fulfilled"&&r.value.status==="ok"){
-      items=items.concat(r.value.items.map(it=>({
-        title:it.title,url:it.link,date:it.pubDate,source:hostFromUrl(it.link)
-      })));
-    }
-  });
+  const results=await Promise.all(feeds.map(f=>fetchOne(f)));
+  const items=results.flat();
   items.sort((a,b)=>new Date(b.date)-new Date(a.date));
   return items;
+}
+function dedupeByUrl(items){
+  const seen=new Set(),out=[];
+  for(const item of items){
+    const key=item.url.split("?")[0];
+    if(seen.has(key))continue;
+    seen.add(key);out.push(item);
+  }
+  return out;
 }
 
 const newsList=document.querySelector("#newsList");
 const newsUpdated=document.querySelector("#newsUpdated");
-let currentCategory=store.get("pulse-news-cat","crypto");
+let currentCategory=store.get("pulse-news-cat","generale");
+if(!CATEGORY_QUERIES[currentCategory])currentCategory="generale";
+
+let curatedPool=null,curatedPoolPromise=null;
+async function getCuratedPool(){
+  if(curatedPool)return curatedPool;
+  if(!curatedPoolPromise)curatedPoolPromise=fetchFeeds(CURATED_DEFENSE_FEEDS);
+  curatedPool=await curatedPoolPromise;
+  return curatedPool;
+}
+function refreshCuratedPool(){
+  curatedPool=null;
+  curatedPoolPromise=fetchFeeds(CURATED_DEFENSE_FEEDS);
+  curatedPoolPromise.then(items=>curatedPool=items);
+}
+setInterval(refreshCuratedPool,NEWS_REFRESH_MS);
 
 async function loadCategoryNews(){
   renderNewsSkeleton(newsList);
   try{
-    const items=await fetchFeeds(CATEGORY_FEEDS[currentCategory]);
+    const pool=await getCuratedPool();
+    const queries=CATEGORY_QUERIES[currentCategory]||[];
+    const queryItems=await fetchFeeds(queries.map(([q,lang])=>googleNewsUrl(q,lang)));
+    const keywords=CATEGORY_KEYWORDS[currentCategory];
+    const poolItems=keywords
+      ?pool.filter(it=>{const t=it.title.toLowerCase();return keywords.some(k=>t.includes(k))})
+      :pool;
+    const items=dedupeByUrl([...poolItems,...queryItems]).sort((a,b)=>new Date(b.date)-new Date(a.date));
     if(!items.length)throw new Error("empty");
     renderNewsList(newsList,items);
     newsUpdated.textContent="aggiornato "+new Date().toLocaleTimeString("it-IT");
@@ -390,8 +524,14 @@ setInterval(loadCategoryNews,NEWS_REFRESH_MS);
 /* ---------- Interactive map ---------- */
 const REGION_NAMES={it:"Italia",eu:"Europa",na:"Nord America",sa:"Sud America",me:"Medio Oriente",as:"Asia",af:"Africa",oc:"Oceania"};
 const REGION_QUERIES={
-  it:"Italia",eu:"Europa",na:"Stati Uniti OR Canada",sa:"America Latina",
-  me:"Medio Oriente",as:"Asia",af:"Africa",oc:"Oceania OR Australia"
+  it:[["Italia difesa esercito forze armate","it"],["Italy defense military armed forces","en"]],
+  eu:[["Europa difesa sicurezza militare NATO","it"],["Europe defense security military NATO","en"]],
+  na:[["Stati Uniti Canada difesa militare","it"],["United States Canada defense military","en"]],
+  sa:[["America Latina difesa militare sicurezza","it"],["Latin America defense military security","en"]],
+  me:[["Medio Oriente conflitto militare difesa","it"],["Middle East military conflict defense","en"]],
+  as:[["Asia difesa militare sicurezza","it"],["Asia defense military security","en"]],
+  af:[["Africa difesa militare sicurezza","it"],["Africa defense military security","en"]],
+  oc:[["Oceania Australia difesa militare","it"],["Oceania Australia defense military","en"]]
 };
 
 const mapWrap=document.querySelector("#mapWrap");
@@ -407,15 +547,15 @@ function setActiveRegion(region){
   mapWrap.querySelectorAll(".country").forEach(c=>{
     c.classList.toggle("region-active",c.classList.contains("region-"+region));
   });
-  mapNewsTitle.textContent="Notizie — "+REGION_NAMES[region];
+  mapNewsTitle.textContent="Difesa & sicurezza — "+REGION_NAMES[region];
   loadRegionNews();
 }
 
 async function loadRegionNews(){
   renderNewsSkeleton(mapNewsList,4);
   try{
-    const feed=`https://news.google.com/rss/search?q=${encodeURIComponent(REGION_QUERIES[currentRegion])}&hl=it&gl=IT&ceid=IT:it`;
-    const items=await fetchFeeds([feed]);
+    const queries=REGION_QUERIES[currentRegion].map(([q,lang])=>googleNewsUrl(q,lang));
+    const items=dedupeByUrl(await fetchFeeds(queries));
     if(!items.length)throw new Error("empty");
     renderNewsList(mapNewsList,items);
     mapNewsUpdated.textContent="aggiornato "+new Date().toLocaleTimeString("it-IT");
