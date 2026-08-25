@@ -26,21 +26,23 @@
 
 <nav class="dotnav" id="dotnav">
   <button data-target="s1" data-label="01 — Home" class="active" aria-label="Vai a Home"></button>
-  <button data-target="s2" data-label="02 — The Day" aria-label="Vai a The Day"></button>
-  <button data-target="s3" data-label="03 — La Cerimonia" aria-label="Vai a La Cerimonia"></button>
-  <button data-target="s4" data-label="04 — Il Ricevimento" aria-label="Vai a Il Ricevimento"></button>
-  <button data-target="s5" data-label="05 — Details" aria-label="Vai a Details"></button>
-  <button data-target="s6" data-label="06 — RSVP" aria-label="Vai a RSVP"></button>
+  <button data-target="s2" data-label="02 — Il Nostro Messaggio" aria-label="Vai a Il Nostro Messaggio"></button>
+  <button data-target="s3" data-label="03 — The Day" aria-label="Vai a The Day"></button>
+  <button data-target="s4" data-label="04 — La Cerimonia" aria-label="Vai a La Cerimonia"></button>
+  <button data-target="s5" data-label="05 — Il Ricevimento" aria-label="Vai a Il Ricevimento"></button>
+  <button data-target="s6" data-label="06 — Details" aria-label="Vai a Details"></button>
+  <button data-target="s7" data-label="07 — RSVP" aria-label="Vai a RSVP"></button>
 </nav>
 
 <nav class="menu" id="menu">
   <ul class="menu-list">
     <li><button data-target="s1"><small>01</small>&nbsp;&nbsp;Home</button></li>
-    <li><button data-target="s2"><small>02</small>&nbsp;&nbsp;The&nbsp;Day</button></li>
-    <li><button data-target="s3"><small>03</small>&nbsp;&nbsp;La&nbsp;Cerimonia</button></li>
-    <li><button data-target="s4"><small>04</small>&nbsp;&nbsp;Il&nbsp;Ricevimento</button></li>
-    <li><button data-target="s5"><small>05</small>&nbsp;&nbsp;Details</button></li>
-    <li><button data-target="s6"><small>06</small>&nbsp;&nbsp;RSVP</button></li>
+    <li><button data-target="s2"><small>02</small>&nbsp;&nbsp;Il&nbsp;Nostro&nbsp;Messaggio</button></li>
+    <li><button data-target="s3"><small>03</small>&nbsp;&nbsp;The&nbsp;Day</button></li>
+    <li><button data-target="s4"><small>04</small>&nbsp;&nbsp;La&nbsp;Cerimonia</button></li>
+    <li><button data-target="s5"><small>05</small>&nbsp;&nbsp;Il&nbsp;Ricevimento</button></li>
+    <li><button data-target="s6"><small>06</small>&nbsp;&nbsp;Details</button></li>
+    <li><button data-target="s7"><small>07</small>&nbsp;&nbsp;RSVP</button></li>
   </ul>
 </nav>
 
@@ -70,13 +72,22 @@
     <div class="scroll-cue" id="scrollCue"><span>Scorri per esplorare</span><i></i></div>
   </section>
 
-  <!-- 02 — THE DAY -->
-  <section class="scene band day" id="s2">
+  <!-- 02 — IL NOSTRO MESSAGGIO -->
+  <section class="scene message" id="s2">
+    <div class="scene-content message-inner">
+      <p data-reveal style="--i:0">Ci siamo incontrati da bambini,<br>ci siamo ritrovati dopo tanti anni.<br>E questa volta, per restare.</p>
+      <p data-reveal style="--i:1">Domenica <span class="message-date">4 luglio 2027</span> siamo pronti a scrivere insieme<br>il capitolo più bello della nostra storia.</p>
+      <p data-reveal style="--i:2">E vogliamo celebrare questo nuovo inizio con voi.</p>
+    </div>
+  </section>
+
+  <!-- 03 — THE DAY -->
+  <section class="scene band day" id="s3">
     <div class="band-photo"><div class="bg" style="background-image:url(assets/bg-day.jpg)"></div></div>
     <div class="band-panel">
       <div class="scene-content">
       <div class="side-head">
-        <p class="num" data-reveal style="--i:0">02</p>
+        <p class="num" data-reveal style="--i:0">03</p>
         <p class="eyebrow" data-reveal style="--i:1">The Day</p>
         <div class="divider" data-reveal style="--i:2"></div>
         <p class="day-date" data-reveal style="--i:3">4 Luglio 2027</p>
@@ -112,13 +123,13 @@
     </div>
   </section>
 
-  <!-- 03 — LA CERIMONIA -->
-  <section class="scene band location" id="s3">
+  <!-- 04 — LA CERIMONIA -->
+  <section class="scene band location" id="s4">
     <div class="band-photo"><div class="bg" style="background-image:url(assets/bg-location.jpg)"></div></div>
     <div class="band-panel">
       <div class="scene-content">
       <div class="side-head">
-        <p class="num" data-reveal style="--i:0">03</p>
+        <p class="num" data-reveal style="--i:0">04</p>
         <p class="eyebrow" data-reveal style="--i:1">La Cerimonia</p>
         <div class="divider" data-reveal style="--i:2"></div>
         <p data-reveal style="--i:3">Chiesa Santa Maria delle Grazie presso il Convento dei Minimi<br>Cirella di Diamante (CS)</p>
@@ -127,13 +138,13 @@
     </div>
   </section>
 
-  <!-- 04 — IL RICEVIMENTO -->
-  <section class="scene band reception" id="s4">
+  <!-- 05 — IL RICEVIMENTO -->
+  <section class="scene band reception" id="s5">
     <div class="band-photo"><div class="bg" style="background-image:url(assets/bg-hero.jpg)"></div></div>
     <div class="band-panel">
       <div class="scene-content">
       <div class="side-head">
-        <p class="num" data-reveal style="--i:0">04</p>
+        <p class="num" data-reveal style="--i:0">05</p>
         <p class="eyebrow" data-reveal style="--i:1">Il Ricevimento</p>
         <div class="divider" data-reveal style="--i:2"></div>
         <p data-reveal style="--i:3">Palazzo dei Principi Lanza di Trabia<br>Corso Principi Lanza di Trabia<br>87020 San Nicola Arcella (CS)</p>
@@ -142,11 +153,11 @@
     </div>
   </section>
 
-  <!-- 05 — DETAILS -->
-  <section class="scene details" id="s5">
+  <!-- 06 — DETAILS -->
+  <section class="scene details" id="s6">
     <div class="scene-content">
       <div class="side-head">
-        <p class="num" data-reveal style="--i:0">05</p>
+        <p class="num" data-reveal style="--i:0">06</p>
         <p class="eyebrow" data-reveal style="--i:1">Details</p>
         <div class="divider" data-reveal style="--i:2"></div>
         <p data-reveal style="--i:3">Tutte le informazioni per organizzare al meglio la vostra presenza. Tocca una voce per saperne di più.</p>
@@ -192,13 +203,13 @@
     </div>
   </section>
 
-  <!-- 06 — RSVP -->
-  <section class="scene band rsvp" id="s6">
+  <!-- 07 — RSVP -->
+  <section class="scene band rsvp" id="s7">
     <div class="band-photo"><div class="bg" style="background-image:url(assets/bg-rsvp.jpg)"></div></div>
     <div class="band-panel">
       <div class="scene-content">
       <div class="side-head">
-        <p class="num" data-reveal style="--i:0">06</p>
+        <p class="num" data-reveal style="--i:0">07</p>
         <p class="eyebrow" data-reveal style="--i:1">RSVP</p>
         <div class="divider" data-reveal style="--i:2"></div>
         <p data-reveal style="--i:3">Confermate la vostra presenza entro il 15 maggio 2027.</p>
