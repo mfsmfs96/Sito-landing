@@ -272,6 +272,17 @@ a{color:inherit}
 }
 @keyframes scrolldrop{0%{top:-100%}60%{top:100%}100%{top:100%}}
 
+/* ---------- message ---------- */
+.message{justify-content:center;text-align:center;background:linear-gradient(180deg,var(--paper-2),var(--paper))}
+.message-inner{max-width:660px;margin:0 auto}
+.message-inner p{
+  font:400 clamp(19px,2.4vw,25px)/1.8 var(--serif);
+  color:var(--ink);
+  margin:0 0 38px;
+}
+.message-inner p:last-child{margin-bottom:0}
+.message-date{color:var(--rose-deep)}
+
 /* ---------- generic band-scene layout (day / location / rsvp): clean photo band + solid content panel ---------- */
 .scene.band{
   display:block;padding:0;min-height:0;overflow:visible;
