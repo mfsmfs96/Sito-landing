@@ -395,10 +395,6 @@ a{color:inherit}
 .detail-card.open .plus{transform:rotate(45deg)}
 
 /* ---------- rsvp ---------- */
-.rsvp-deadline{display:flex;gap:18px;margin-top:26px;flex-wrap:wrap;justify-content:center}
-.rsvp-deadline div{display:flex;flex-direction:column;align-items:flex-start}
-.rsvp-deadline b{font:300 30px/1 var(--serif);color:var(--rose-deep)}
-.rsvp-deadline span{font:600 9px var(--sans);letter-spacing:.18em;color:var(--ink-soft);margin-top:5px;text-transform:uppercase}
 .rsvp-cta{margin-top:34px}
 
 .footer{
@@ -455,7 +451,6 @@ a{color:inherit}
   .dotnav{display:none}
   .footer{flex-direction:column;align-items:flex-start}
   .countdown{gap:14px}
-  .rsvp-deadline{gap:16px}
 }
 @media(min-width:641px){
   .hero .hero-cta,.hero .countdown,.hero .hero-venue,.hero .hero-date,.hero .eyebrow{text-align:center}
