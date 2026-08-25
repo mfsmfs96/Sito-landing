@@ -134,10 +134,28 @@
     <ul id="trendList" class="trend-list"></ul>
 
     <div class="section-head" style="margin-top:36px">
+      <h2>Rubrica aziende &amp; fondamentali</h2>
+      <span class="muted">Clicca un'azienda per prezzo, multipli e dati di bilancio live</span>
+    </div>
+    <div class="company-directory" id="companyDirectory"></div>
+
+    <div class="section-head" style="margin-top:36px">
       <h2>Contratti &amp; Deal</h2>
-      <span class="muted">Notizie che menzionano contratti, accordi o importi</span>
+      <span class="muted">Con ipotesi di struttura di finanziamento (da validare)</span>
     </div>
     <ul id="dealsList" class="news-list"></ul>
+
+    <div class="section-head" style="margin-top:36px">
+      <h2>Possibili opportunità PMI / subfornitori</h2>
+      <span class="muted">Deal senza una delle grandi aziende monitorate: verificare il nome coinvolto</span>
+    </div>
+    <ul id="supplyChainList" class="news-list"></ul>
+
+    <div class="section-head" style="margin-top:36px">
+      <h2>La tua watchlist</h2>
+      <span class="muted">Salvata in questo browser</span>
+    </div>
+    <ul id="watchlistList" class="news-list"></ul>
   </section>
 
   <section id="tab-tv" class="tabpanel">
@@ -255,6 +273,16 @@
       <svg id="modalChart" viewBox="0 0 600 220" preserveAspectRatio="none"></svg>
     </div>
     <div class="modal-stats" id="modalStats"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="companyModal">
+  <div class="modal-sheet modal-sheet--wide">
+    <button class="modal-close" id="companyModalClose" aria-label="Chiudi">&times;</button>
+    <div class="modal-head">
+      <div class="modal-sym" id="companyModalName">—</div>
+    </div>
+    <div class="company-modal-widgets" id="companyModalWidgets"></div>
   </div>
 </div>
 
