@@ -13,7 +13,7 @@ function applyTheme(t){
 function effectiveTheme(){
   return savedTheme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");
 }
-let savedTheme=store.get("pulse-theme","");
+let savedTheme=store.get("pulse-theme","dark");
 applyTheme(savedTheme);
 themeToggle.addEventListener("click",()=>{
   const current=effectiveTheme();
@@ -24,17 +24,20 @@ themeToggle.addEventListener("click",()=>{
 });
 
 /* ---------- Tabs ---------- */
-const TABS=["mercati","news","tv","map"];
+const TABS=["indici","crypto","titoli","difesa","militare","armi","tech","tv","mappa"];
+let currentTab=TABS[0];
 function activateTab(tab,persist=true){
   if(!TABS.includes(tab))return;
+  currentTab=tab;
   document.querySelectorAll("#tabs .tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
   document.querySelectorAll(".tabpanel").forEach(p=>p.classList.toggle("active",p.id==="tab-"+tab));
   if(persist)store.set("pulse-tab",tab);
+  if(NEWS_TAB_CATEGORY[tab])loadCategoryNews(NEWS_TAB_CATEGORY[tab]);
 }
 document.querySelectorAll("#tabs .tab").forEach(btn=>{
   btn.addEventListener("click",()=>activateTab(btn.dataset.tab));
 });
-activateTab(store.get("pulse-tab","mercati"),false);
+const NEWS_TAB_CATEGORY={difesa:"generale",militare:"militari",armi:"armamenti",tech:"tecnologia"};
 
 /* ---------- TradingView widgets (indices, commodities, per-exchange movers) ---------- */
 function mountTradingViewWidget(container,scriptSrc,config){
@@ -491,10 +494,12 @@ async function cachedNews(key,ttlMs,fetcher){
   }
 }
 
-const newsList=document.querySelector("#newsList");
-const newsUpdated=document.querySelector("#newsUpdated");
-let currentCategory=store.get("pulse-news-cat","generale");
-if(!CATEGORY_QUERIES[currentCategory])currentCategory="generale";
+const CATEGORY_ELEMENTS={
+  generale:{list:document.querySelector("#newsList-generale"),updated:document.querySelector("#newsUpdated-generale")},
+  militari:{list:document.querySelector("#newsList-militari"),updated:document.querySelector("#newsUpdated-militari")},
+  armamenti:{list:document.querySelector("#newsList-armamenti"),updated:document.querySelector("#newsUpdated-armamenti")},
+  tecnologia:{list:document.querySelector("#newsList-tecnologia"),updated:document.querySelector("#newsUpdated-tecnologia")}
+};
 
 let curatedPool=null,curatedPoolPromise=null;
 async function getCuratedPool(){
@@ -513,9 +518,9 @@ setInterval(refreshCuratedPool,NEWS_REFRESH_MS);
 function renderEmptyState(listEl,text){
   listEl.innerHTML=`<li class="news-item empty">${text}</li>`;
 }
-async function loadCategoryNews(){
-  const cat=currentCategory;
-  if(!newsCache.has("cat:"+cat))renderNewsSkeleton(newsList);
+async function loadCategoryNews(cat){
+  const{list,updated}=CATEGORY_ELEMENTS[cat];
+  if(!newsCache.has("cat:"+cat))renderNewsSkeleton(list);
   const{items,ts}=await cachedNews("cat:"+cat,NEWS_REFRESH_MS,async()=>{
     const pool=await getCuratedPool();
     const queries=CATEGORY_QUERIES[cat]||[];
@@ -526,28 +531,18 @@ async function loadCategoryNews(){
       :pool;
     return dedupeByUrl([...poolItems,...queryItems]).sort((a,b)=>new Date(b.date)-new Date(a.date));
   });
-  if(cat!==currentCategory)return;
   if(items.length){
-    renderNewsList(newsList,items);
-    newsUpdated.textContent="aggiornato "+new Date(ts).toLocaleTimeString("it-IT");
+    renderNewsList(list,items);
+    updated.textContent="aggiornato "+new Date(ts).toLocaleTimeString("it-IT");
   }else{
-    renderEmptyState(newsList,"Nessuna notizia disponibile al momento, riprovo tra poco…");
-    newsUpdated.textContent="feed non disponibile, riprovo…";
+    renderEmptyState(list,"Nessuna notizia disponibile al momento, riprovo tra poco…");
+    updated.textContent="feed non disponibile, riprovo…";
   }
 }
-document.querySelectorAll("#newsCategoryTabs .seg").forEach(btn=>{
-  btn.classList.toggle("active",btn.dataset.cat===currentCategory);
-  btn.addEventListener("click",()=>{
-    if(btn.dataset.cat===currentCategory)return;
-    document.querySelectorAll("#newsCategoryTabs .seg").forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    currentCategory=btn.dataset.cat;
-    store.set("pulse-news-cat",currentCategory);
-    loadCategoryNews();
-  });
-});
-loadCategoryNews();
-setInterval(loadCategoryNews,NEWS_REFRESH_MS);
+setInterval(()=>{
+  const cat=NEWS_TAB_CATEGORY[currentTab];
+  if(cat)loadCategoryNews(cat);
+},NEWS_REFRESH_MS);
 
 /* ---------- Interactive map ---------- */
 const REGION_NAMES={it:"Italia",eu:"Europa",na:"Nord America",sa:"Sud America",me:"Medio Oriente",as:"Asia",af:"Africa",oc:"Oceania"};
@@ -615,3 +610,9 @@ fetch("world-map.svg").then(r=>r.text()).then(svg=>{
   mapWrap.innerHTML='<p class="muted">Mappa non disponibile al momento.</p>';
   loadRegionNews();
 });
+
+/* ---------- Initial tab activation (deferred so all sections above are ready) ---------- */
+{
+  const stored=store.get("pulse-tab",TABS[0]);
+  activateTab(TABS.includes(stored)?stored:TABS[0],false);
+}

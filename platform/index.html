@@ -8,7 +8,7 @@
 <meta property="og:title" content="Pulse — Difesa, sicurezza e mercati in tempo reale">
 <meta property="og:description" content="Notizie di difesa, sicurezza, affari militari, armamenti e tecnologia militare da fonti internazionali, mappa del mondo interattiva, prezzi crypto e TV in diretta.">
 <meta property="og:type" content="website">
-<meta name="theme-color" content="#0071e3">
+<meta name="theme-color" content="#0a0a0a">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="alternate icon" href="favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -19,12 +19,17 @@
 
 <header class="navbar">
   <div class="navbar-inner">
-    <span class="brand">Pulse</span>
+    <span class="brand">PULSE<span>_</span></span>
     <nav class="tabs" id="tabs">
-      <button class="tab active" data-tab="mercati">Mercati</button>
-      <button class="tab" data-tab="news">Notizie</button>
-      <button class="tab" data-tab="tv">TV Live</button>
-      <button class="tab" data-tab="map">Mappa</button>
+      <button class="tab active" data-tab="indici"><span class="tab-icon">I</span>Indici</button>
+      <button class="tab" data-tab="crypto"><span class="tab-icon">C</span>Crypto</button>
+      <button class="tab" data-tab="titoli"><span class="tab-icon">$</span>Titoli</button>
+      <button class="tab" data-tab="difesa"><span class="tab-icon">D</span>Difesa</button>
+      <button class="tab" data-tab="militare"><span class="tab-icon">M</span>Militare</button>
+      <button class="tab" data-tab="armi"><span class="tab-icon">A</span>Armi</button>
+      <button class="tab" data-tab="tech"><span class="tab-icon">T</span>Tech</button>
+      <button class="tab" data-tab="tv"><span class="tab-icon">V</span>TV Live</button>
+      <button class="tab" data-tab="mappa"><span class="tab-icon">W</span>Mappa</button>
     </nav>
     <div class="navbar-status">
       <i id="statusDot" class="dot"></i>
@@ -42,14 +47,16 @@
 
 <main class="content">
 
-  <section id="tab-mercati" class="tabpanel active">
+  <section id="tab-indici" class="tabpanel active">
     <div class="section-head">
       <h1>Indici &amp; materie prime</h1>
       <span class="muted">Piazza Affari, Parigi, Londra, New York, Hong Kong</span>
     </div>
     <div class="tv-widget-card" id="tvMarketOverview"></div>
+  </section>
 
-    <div class="section-head" style="margin-top:40px">
+  <section id="tab-crypto" class="tabpanel">
+    <div class="section-head">
       <h1>Crypto</h1>
       <span class="live-pill" id="marketStatus">Connessione…</span>
     </div>
@@ -69,8 +76,10 @@
       </div>
     </div>
     <div id="priceGrid" class="price-grid"></div>
+  </section>
 
-    <div class="section-head" style="margin-top:40px">
+  <section id="tab-titoli" class="tabpanel">
+    <div class="section-head">
       <h1>Titoli del giorno</h1>
       <span class="muted">Usa i filtri del widget per nazione, indice, settore, capitalizzazione ecc.</span>
     </div>
@@ -78,18 +87,36 @@
     <p class="tv-note">Clicca l'intestazione "% Var." per ordinare dal migliore al peggiore titolo. Dati di mercato forniti da TradingView.</p>
   </section>
 
-  <section id="tab-news" class="tabpanel">
+  <section id="tab-difesa" class="tabpanel">
     <div class="section-head">
       <h1>Difesa &amp; Sicurezza</h1>
-      <span class="muted" id="newsUpdated">in aggiornamento…</span>
+      <span class="muted" id="newsUpdated-generale">in aggiornamento…</span>
     </div>
-    <div class="segmented" id="newsCategoryTabs">
-      <button class="seg active" data-cat="generale">Generale</button>
-      <button class="seg" data-cat="militari">Affari militari</button>
-      <button class="seg" data-cat="armamenti">Armamenti</button>
-      <button class="seg" data-cat="tecnologia">Tecnologia militare</button>
+    <ul id="newsList-generale" class="news-list"></ul>
+  </section>
+
+  <section id="tab-militare" class="tabpanel">
+    <div class="section-head">
+      <h1>Affari Militari</h1>
+      <span class="muted" id="newsUpdated-militari">in aggiornamento…</span>
     </div>
-    <ul id="newsList" class="news-list"></ul>
+    <ul id="newsList-militari" class="news-list"></ul>
+  </section>
+
+  <section id="tab-armi" class="tabpanel">
+    <div class="section-head">
+      <h1>Armamenti</h1>
+      <span class="muted" id="newsUpdated-armamenti">in aggiornamento…</span>
+    </div>
+    <ul id="newsList-armamenti" class="news-list"></ul>
+  </section>
+
+  <section id="tab-tech" class="tabpanel">
+    <div class="section-head">
+      <h1>Tecnologia Militare</h1>
+      <span class="muted" id="newsUpdated-tecnologia">in aggiornamento…</span>
+    </div>
+    <ul id="newsList-tecnologia" class="news-list"></ul>
   </section>
 
   <section id="tab-tv" class="tabpanel">
@@ -165,7 +192,7 @@
     <p class="tv-note">Sky TG24, Bloomberg Television, Al Jazeera English, DW News e CNN International impediscono l'incorporazione diretta del proprio sito, quindi mostriamo il loro canale YouTube ufficiale; se un canale non risulta live in quel momento, YouTube mostra l'ultimo contenuto disponibile. Class CNBC e France 24 invece sono incorporati direttamente dai rispettivi siti ufficiali.
   </section>
 
-  <section id="tab-map" class="tabpanel">
+  <section id="tab-mappa" class="tabpanel">
     <div class="section-head">
       <h1>Mappa del mondo</h1>
       <span class="muted">Clicca un'area per le notizie di difesa e sicurezza in tempo reale</span>
