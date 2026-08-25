@@ -1,12 +1,37 @@
-/* ---------- Tabs ---------- */
-document.querySelectorAll("#tabs .tab").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    document.querySelectorAll("#tabs .tab").forEach(b=>b.classList.remove("active"));
-    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.remove("active"));
-    btn.classList.add("active");
-    document.querySelector("#tab-"+btn.dataset.tab).classList.add("active");
-  });
+/* ---------- Persisted preferences ---------- */
+const store={
+  get(k,d){try{return localStorage.getItem(k)??d}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+};
+
+/* ---------- Theme ---------- */
+const themeToggle=document.querySelector("#themeToggle");
+function applyTheme(t){
+  if(t)document.documentElement.setAttribute("data-theme",t);
+  else document.documentElement.removeAttribute("data-theme");
+}
+let savedTheme=store.get("pulse-theme","");
+applyTheme(savedTheme);
+themeToggle.addEventListener("click",()=>{
+  const prefersDark=matchMedia("(prefers-color-scheme:dark)").matches;
+  const current=savedTheme||(prefersDark?"dark":"light");
+  savedTheme=current==="dark"?"light":"dark";
+  store.set("pulse-theme",savedTheme);
+  applyTheme(savedTheme);
 });
+
+/* ---------- Tabs ---------- */
+const TABS=["crypto","news","tv","map"];
+function activateTab(tab,persist=true){
+  if(!TABS.includes(tab))return;
+  document.querySelectorAll("#tabs .tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+  document.querySelectorAll(".tabpanel").forEach(p=>p.classList.toggle("active",p.id==="tab-"+tab));
+  if(persist)store.set("pulse-tab",tab);
+}
+document.querySelectorAll("#tabs .tab").forEach(btn=>{
+  btn.addEventListener("click",()=>activateTab(btn.dataset.tab));
+});
+activateTab(store.get("pulse-tab","crypto"),false);
 
 /* ---------- Clock ---------- */
 const clock=document.querySelector("#clock");
@@ -14,22 +39,53 @@ function tickClock(){clock.textContent=new Date().toLocaleTimeString("it-IT")}
 setInterval(tickClock,1000);
 tickClock();
 
-/* ---------- Crypto prices (Coinbase WebSocket, CoinGecko fallback) ---------- */
+/* ---------- Crypto prices (Coinbase WebSocket, CoinGecko fallback + details) ---------- */
 const PRODUCTS=["BTC-USD","ETH-USD","SOL-USD","XRP-USD","ADA-USD","DOGE-USD","LTC-USD"];
 const COINGECKO_MAP={"BTC-USD":"bitcoin","ETH-USD":"ethereum","SOL-USD":"solana","XRP-USD":"ripple","ADA-USD":"cardano","DOGE-USD":"dogecoin","LTC-USD":"litecoin"};
 
 const priceGrid=document.querySelector("#priceGrid");
 const statusDot=document.querySelector("#statusDot");
 const marketStatus=document.querySelector("#marketStatus");
+const tickerTrack=document.querySelector("#tickerTrack");
 
 const cards={};
+const marketsData={};
+
+function fmtPrice(price){
+  return "$"+price.toLocaleString("en-US",{minimumFractionDigits:price<10?4:2,maximumFractionDigits:price<10?4:2});
+}
+
 PRODUCTS.forEach(sym=>{
   const el=document.createElement("div");
   el.className="price-card skeleton";
-  el.innerHTML=`<div class="sym">${sym.replace("-","/")}</div><div class="val">—</div><div class="chg">—</div>`;
+  el.innerHTML=`<div class="sym">${sym.replace("-","/")}</div><div class="val">—</div><div class="chg">—</div>
+    <svg class="spark" viewBox="0 0 100 34" preserveAspectRatio="none"><path/></svg>`;
+  el.addEventListener("click",()=>openCoinModal(sym));
   priceGrid.appendChild(el);
-  cards[sym]={el,val:el.querySelector(".val"),chg:el.querySelector(".chg"),last:null};
+  cards[sym]={el,val:el.querySelector(".val"),chg:el.querySelector(".chg"),spark:el.querySelector(".spark path"),last:null};
 });
+
+function buildTicker(){
+  const row=PRODUCTS.map(sym=>`
+    <span class="ticker-item" data-tsym="${sym}">
+      <span class="t-sym">${sym.replace("-","/")}</span>
+      <span class="t-val">—</span>
+      <span class="t-chg">—</span>
+    </span>
+  `).join("");
+  tickerTrack.innerHTML=row+row;
+}
+buildTicker();
+function updateTicker(sym,price,changePct){
+  document.querySelectorAll(`.ticker-item[data-tsym="${sym}"]`).forEach(item=>{
+    item.querySelector(".t-val").textContent=fmtPrice(price);
+    if(isFinite(changePct)){
+      const c=item.querySelector(".t-chg");
+      c.textContent=(changePct>=0?"+":"")+changePct.toFixed(2)+"%";
+      c.className="t-chg "+(changePct>=0?"up":"down");
+    }
+  });
+}
 
 function setMarketStatus(state,text){
   statusDot.className="dot "+state;
@@ -42,7 +98,7 @@ function updateCard(sym,price,changePct){
   if(!c||!isFinite(price))return;
   c.el.classList.remove("skeleton");
   const prev=c.last;
-  c.val.textContent="$"+price.toLocaleString("en-US",{minimumFractionDigits:price<10?4:2,maximumFractionDigits:price<10?4:2});
+  c.val.textContent=fmtPrice(price);
   if(isFinite(changePct)){
     c.chg.textContent=(changePct>=0?"+":"")+changePct.toFixed(2)+"%";
     c.chg.className="chg "+(changePct>=0?"up":"down");
@@ -53,6 +109,25 @@ function updateCard(sym,price,changePct){
     c.el.classList.add(price>prev?"flash-up":"flash-down");
   }
   c.last=price;
+  updateTicker(sym,price,changePct);
+}
+
+function sparkPath(prices){
+  if(!prices||prices.length<2)return"";
+  const min=Math.min(...prices),max=Math.max(...prices);
+  const range=(max-min)||1;
+  const stepX=100/(prices.length-1);
+  return prices.map((p,i)=>{
+    const x=(i*stepX).toFixed(2);
+    const y=(32-((p-min)/range)*30).toFixed(2);
+    return (i===0?"M":"L")+x+","+y;
+  }).join(" ");
+}
+function renderSparkline(sym,prices){
+  const c=cards[sym];
+  if(!c||!prices||prices.length<2)return;
+  c.spark.setAttribute("d",sparkPath(prices));
+  c.spark.setAttribute("class",prices[prices.length-1]>=prices[0]?"up":"down");
 }
 
 let ws=null,wsOpened=false,reconnectDelay=1000,pollTimer=null;
@@ -105,8 +180,122 @@ function startPollingFallback(){
   pollTimer=setInterval(pollPricesOnce,15000);
 }
 
+/* Richer market data (sparkline + stats) — independent of the WS/fallback price feed */
+const MARKET_DETAILS_MS=5*60*1000;
+async function loadMarketDetails(){
+  try{
+    const ids=Object.values(COINGECKO_MAP).join(",");
+    const res=await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&sparkline=true&price_change_percentage=24h`);
+    const rows=await res.json();
+    const bySymId=Object.fromEntries(Object.entries(COINGECKO_MAP).map(([sym,id])=>[id,sym]));
+    rows.forEach(row=>{
+      const sym=bySymId[row.id];
+      if(!sym)return;
+      marketsData[sym]=row;
+      renderSparkline(sym,row.sparkline_in_7d?.price);
+      if(!wsOpened)updateCard(sym,row.current_price,row.price_change_percentage_24h);
+    });
+  }catch(e){}
+}
+
 pollPricesOnce();
 startWebSocket();
+loadMarketDetails();
+setInterval(loadMarketDetails,MARKET_DETAILS_MS);
+
+/* ---------- Fear & Greed gauge ---------- */
+const fngArc=document.querySelector("#fngArc");
+const fngNeedle=document.querySelector("#fngNeedle");
+const fngValue=document.querySelector("#fngValue");
+const fngLabel=document.querySelector("#fngLabel");
+const FNG_LABELS_IT={
+  "Extreme Fear":"Paura estrema","Fear":"Paura","Neutral":"Neutrale",
+  "Greed":"Avidità","Extreme Greed":"Avidità estrema"
+};
+async function loadFearGreed(){
+  try{
+    const res=await fetch("https://api.alternative.me/fng/?limit=1");
+    const data=await res.json();
+    const point=data.data[0];
+    const value=parseInt(point.value,10);
+    const arcLen=157;
+    fngArc.style.strokeDashoffset=arcLen*(1-value/100);
+    fngArc.style.stroke=value<25?"var(--down)":value<50?"#ff9f0a":value<75?"#a8d34a":"var(--up)";
+    fngNeedle.style.transform=`rotate(${-90+(value/100)*180}deg)`;
+    fngValue.textContent=value;
+    fngLabel.textContent=(FNG_LABELS_IT[point.value_classification]||point.value_classification);
+  }catch(e){
+    fngLabel.textContent="non disponibile";
+  }
+}
+loadFearGreed();
+setInterval(loadFearGreed,10*60*1000);
+
+/* ---------- Coin detail modal ---------- */
+const coinModal=document.querySelector("#coinModal");
+const modalSym=document.querySelector("#modalSym");
+const modalPrice=document.querySelector("#modalPrice");
+const modalChg=document.querySelector("#modalChg");
+const modalChart=document.querySelector("#modalChart");
+const modalStats=document.querySelector("#modalStats");
+
+function closeCoinModal(){coinModal.classList.remove("show")}
+document.querySelector("#coinModalClose").addEventListener("click",closeCoinModal);
+coinModal.addEventListener("click",e=>{if(e.target===coinModal)closeCoinModal()});
+
+function fmtCompact(n){
+  if(n==null)return"—";
+  return new Intl.NumberFormat("it-IT",{notation:"compact",maximumFractionDigits:2}).format(n);
+}
+function openCoinModal(sym){
+  const row=marketsData[sym];
+  modalSym.textContent=sym.replace("-","/");
+  if(!row){
+    modalPrice.textContent=cards[sym]?.val.textContent||"—";
+    modalChg.textContent="";
+    modalChart.innerHTML="";
+    modalStats.innerHTML='<div class="stat"><div class="stat-label">Dettagli</div><div class="stat-value">non ancora disponibili</div></div>';
+    coinModal.classList.add("show");
+    return;
+  }
+  const up=row.price_change_percentage_24h>=0;
+  modalPrice.textContent=fmtPrice(row.current_price);
+  modalChg.textContent=(up?"+":"")+row.price_change_percentage_24h.toFixed(2)+"% (24h)";
+  modalChg.className="modal-chg "+(up?"up":"down");
+
+  const prices=row.sparkline_in_7d?.price||[];
+  if(prices.length>1){
+    const min=Math.min(...prices),max=Math.max(...prices),range=(max-min)||1;
+    const stepX=600/(prices.length-1);
+    const linePath=prices.map((p,i)=>{
+      const x=(i*stepX).toFixed(2);
+      const y=(200-((p-min)/range)*180-10).toFixed(2);
+      return (i===0?"M":"L")+x+","+y;
+    }).join(" ");
+    const areaPath=linePath+` L600,220 L0,220 Z`;
+    const gradId="grad-"+sym.replace(/[^a-z]/gi,"");
+    modalChart.innerHTML=`
+      <defs><linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${up?"var(--up)":"var(--down)"}" stop-opacity=".25"/>
+        <stop offset="100%" stop-color="${up?"var(--up)":"var(--down)"}" stop-opacity="0"/>
+      </linearGradient></defs>
+      <path class="area" d="${areaPath}" fill="url(#${gradId})"/>
+      <path class="line ${up?"up":"down"}" d="${linePath}"/>
+    `;
+  }else{
+    modalChart.innerHTML="";
+  }
+
+  modalStats.innerHTML=`
+    <div class="stat"><div class="stat-label">Max 24h</div><div class="stat-value">${fmtPrice(row.high_24h)}</div></div>
+    <div class="stat"><div class="stat-label">Min 24h</div><div class="stat-value">${fmtPrice(row.low_24h)}</div></div>
+    <div class="stat"><div class="stat-label">Cap. di mercato</div><div class="stat-value">$${fmtCompact(row.market_cap)}</div></div>
+    <div class="stat"><div class="stat-label">Volume 24h</div><div class="stat-value">$${fmtCompact(row.total_volume)}</div></div>
+    <div class="stat"><div class="stat-label">All-time high</div><div class="stat-value">${fmtPrice(row.ath)}</div></div>
+    <div class="stat"><div class="stat-label">Da ATH</div><div class="stat-value">${row.ath_change_percentage.toFixed(1)}%</div></div>
+  `;
+  coinModal.classList.add("show");
+}
 
 /* ---------- News (rss2json bridge, feeds per category) ---------- */
 const RSS2JSON="https://api.rss2json.com/v1/api.json?rss_url=";
@@ -137,6 +326,14 @@ function timeAgo(dateStr){
 function hostFromUrl(url){
   try{return new URL(url).hostname.replace(/^www\./,"")}catch(e){return""}
 }
+function renderNewsSkeleton(listEl,count=6){
+  listEl.innerHTML=Array.from({length:count}).map(()=>`
+    <li class="news-item skeleton">
+      <span class="val" style="display:block;width:80%;height:16px"></span>
+      <div class="meta"><span class="chg" style="width:60px;height:12px"></span></div>
+    </li>
+  `).join("");
+}
 function renderNewsList(listEl,items){
   listEl.innerHTML=items.slice(0,24).map(item=>`
     <li class="news-item">
@@ -163,9 +360,10 @@ async function fetchFeeds(feeds){
 
 const newsList=document.querySelector("#newsList");
 const newsUpdated=document.querySelector("#newsUpdated");
-let currentCategory="crypto";
+let currentCategory=store.get("pulse-news-cat","crypto");
 
 async function loadCategoryNews(){
+  renderNewsSkeleton(newsList);
   try{
     const items=await fetchFeeds(CATEGORY_FEEDS[currentCategory]);
     if(!items.length)throw new Error("empty");
@@ -176,12 +374,13 @@ async function loadCategoryNews(){
   }
 }
 document.querySelectorAll("#newsCategoryTabs .seg").forEach(btn=>{
+  btn.classList.toggle("active",btn.dataset.cat===currentCategory);
   btn.addEventListener("click",()=>{
     if(btn.dataset.cat===currentCategory)return;
     document.querySelectorAll("#newsCategoryTabs .seg").forEach(b=>b.classList.remove("active"));
     btn.classList.add("active");
     currentCategory=btn.dataset.cat;
-    newsUpdated.textContent="in aggiornamento…";
+    store.set("pulse-news-cat",currentCategory);
     loadCategoryNews();
   });
 });
@@ -199,10 +398,11 @@ const mapWrap=document.querySelector("#mapWrap");
 const mapNewsList=document.querySelector("#mapNewsList");
 const mapNewsTitle=document.querySelector("#mapNewsTitle");
 const mapNewsUpdated=document.querySelector("#mapNewsUpdated");
-let currentRegion="it";
+let currentRegion=store.get("pulse-region","it");
 
 function setActiveRegion(region){
   currentRegion=region;
+  store.set("pulse-region",region);
   document.querySelectorAll("#regionPills .pill").forEach(p=>p.classList.toggle("active",p.dataset.region===region));
   mapWrap.querySelectorAll(".country").forEach(c=>{
     c.classList.toggle("region-active",c.classList.contains("region-"+region));
@@ -212,7 +412,7 @@ function setActiveRegion(region){
 }
 
 async function loadRegionNews(){
-  mapNewsUpdated.textContent="in aggiornamento…";
+  renderNewsSkeleton(mapNewsList,4);
   try{
     const feed=`https://news.google.com/rss/search?q=${encodeURIComponent(REGION_QUERIES[currentRegion])}&hl=it&gl=IT&ceid=IT:it`;
     const items=await fetchFeeds([feed]);
@@ -225,6 +425,7 @@ async function loadRegionNews(){
 }
 
 document.querySelectorAll("#regionPills .pill").forEach(btn=>{
+  btn.classList.toggle("active",btn.dataset.region===currentRegion);
   btn.addEventListener("click",()=>setActiveRegion(btn.dataset.region));
 });
 
