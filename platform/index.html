@@ -72,16 +72,10 @@
 
     <div class="section-head" style="margin-top:40px">
       <h1>Titoli del giorno</h1>
-      <span class="muted">Clicca l'intestazione "% Var." in ogni tabella per ordinare dal migliore al peggiore</span>
+      <span class="muted">Usa i filtri del widget per nazione, indice, settore, capitalizzazione ecc.</span>
     </div>
-    <div class="exchange-grid" id="exchangeGrid">
-      <div class="exchange-card"><h3>Piazza Affari <small>Milano</small></h3><div class="tv-widget-card" data-exchange="italy"></div></div>
-      <div class="exchange-card"><h3>Parigi <small>Euronext</small></h3><div class="tv-widget-card" data-exchange="france"></div></div>
-      <div class="exchange-card"><h3>Londra <small>LSE</small></h3><div class="tv-widget-card" data-exchange="uk"></div></div>
-      <div class="exchange-card"><h3>New York <small>NYSE/Nasdaq</small></h3><div class="tv-widget-card" data-exchange="america"></div></div>
-      <div class="exchange-card"><h3>Hong Kong <small>HKEX</small></h3><div class="tv-widget-card" data-exchange="hongkong"></div></div>
-    </div>
-    <p class="tv-note">Dati di mercato forniti da TradingView.</p>
+    <div class="tv-widget-card tv-widget-card--tall" id="tvScreener"></div>
+    <p class="tv-note">Clicca l'intestazione "% Var." per ordinare dal migliore al peggiore titolo. Dati di mercato forniti da TradingView.</p>
   </section>
 
   <section id="tab-news" class="tabpanel">
@@ -101,7 +95,7 @@
   <section id="tab-tv" class="tabpanel">
     <div class="section-head">
       <h1>TV Live</h1>
-      <span class="muted">Diretta dai canali ufficiali YouTube</span>
+      <span class="muted">Diretta dai siti e canali ufficiali delle emittenti</span>
     </div>
     <div class="tv-grid">
       <article class="tv-card">
@@ -125,14 +119,14 @@
       <article class="tv-card">
         <div class="tv-card-head"><span class="tv-dot"></span>Class CNBC</div>
         <div class="tv-frame">
-          <iframe src="https://www.youtube-nocookie.com/embed/live_stream?channel=UCURhcVjcglmr1tl2tQiYvkQ"
+          <iframe src="https://video.milanofinanza.it/"
             title="Class CNBC diretta" allow="accelerometer; encrypted-media; picture-in-picture"
             allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
         </div>
-        <a class="tv-link" href="https://www.youtube.com/@classcnbc9745" target="_blank" rel="noopener noreferrer">Apri su YouTube ↗</a>
+        <a class="tv-link" href="https://video.milanofinanza.it/" target="_blank" rel="noopener noreferrer">Apri il sito ufficiale ↗</a>
       </article>
     </div>
-    <p class="tv-note">Se un canale non è live in questo momento, YouTube mostra l'ultimo contenuto disponibile.</p>
+    <p class="tv-note">Sky TG24 e Bloomberg Television impediscono l'incorporazione diretta del proprio sito, quindi mostriamo il loro canale YouTube ufficiale; se non risulta live in quel momento, YouTube mostra l'ultimo contenuto disponibile. Class CNBC invece è incorporato direttamente dal sito ufficiale (video.milanofinanza.it).
   </section>
 
   <section id="tab-map" class="tabpanel">

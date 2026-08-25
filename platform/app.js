@@ -95,23 +95,21 @@ function buildTradingViewWidgets(){
     }
   );
 
-  document.querySelectorAll(".tv-widget-card[data-exchange]").forEach(container=>{
-    mountTradingViewWidget(
-      container,
-      "https://s3.tradingview.com/external-embedding/embed-widget-screener.js",
-      {
-        width:"100%",
-        height:"100%",
-        defaultColumn:"performance",
-        defaultScreen:"general",
-        market:container.dataset.exchange,
-        showToolbar:true,
-        colorTheme:theme,
-        locale:"it",
-        isTransparent:true
-      }
-    );
-  });
+  mountTradingViewWidget(
+    document.querySelector("#tvScreener"),
+    "https://s3.tradingview.com/external-embedding/embed-widget-screener.js",
+    {
+      width:"100%",
+      height:"100%",
+      defaultColumn:"performance",
+      defaultScreen:"general",
+      market:"italy",
+      showToolbar:true,
+      colorTheme:theme,
+      locale:"it",
+      isTransparent:true
+    }
+  );
 }
 buildTradingViewWidgets();
 
@@ -443,20 +441,25 @@ function renderNewsList(listEl,items){
     </li>
   `).join("");
 }
-async function fetchOne(feed,retried){
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function fetchOne(feed,attempt=0){
   try{
     const res=await fetch(RSS2JSON+encodeURIComponent(feed));
     const data=await res.json();
     if(data.status!=="ok")throw new Error(data.message||"bad feed");
     return data.items.map(it=>({title:it.title,url:it.link,date:it.pubDate,source:hostFromUrl(it.link)}));
   }catch(e){
-    if(!retried){await new Promise(r=>setTimeout(r,1200));return fetchOne(feed,true)}
+    if(attempt<2){await sleep(2500*(attempt+1));return fetchOne(feed,attempt+1)}
     return[];
   }
 }
 async function fetchFeeds(feeds){
-  const results=await Promise.all(feeds.map(f=>fetchOne(f)));
-  const items=results.flat();
+  const results=[];
+  for(const feed of feeds){
+    results.push(fetchOne(feed));
+    if(feeds.length>1)await sleep(250);
+  }
+  const items=(await Promise.all(results)).flat();
   items.sort((a,b)=>new Date(b.date)-new Date(a.date));
   return items;
 }
@@ -468,6 +471,24 @@ function dedupeByUrl(items){
     seen.add(key);out.push(item);
   }
   return out;
+}
+
+/* Cache-aware loader: keeps showing the last successful result if a refresh fails,
+   instead of blanking the list on a transient rss2json rate limit. */
+const newsCache=new Map();
+async function cachedNews(key,ttlMs,fetcher){
+  const cached=newsCache.get(key);
+  const now=Date.now();
+  if(cached&&now-cached.ts<ttlMs)return{items:cached.items,ts:cached.ts};
+  try{
+    const items=await fetcher();
+    if(items.length){newsCache.set(key,{items,ts:now});return{items,ts:now}}
+    if(cached)return{items:cached.items,ts:cached.ts};
+    return{items:[],ts:now};
+  }catch(e){
+    if(cached)return{items:cached.items,ts:cached.ts};
+    return{items:[],ts:now};
+  }
 }
 
 const newsList=document.querySelector("#newsList");
@@ -489,21 +510,28 @@ function refreshCuratedPool(){
 }
 setInterval(refreshCuratedPool,NEWS_REFRESH_MS);
 
+function renderEmptyState(listEl,text){
+  listEl.innerHTML=`<li class="news-item empty">${text}</li>`;
+}
 async function loadCategoryNews(){
-  renderNewsSkeleton(newsList);
-  try{
+  const cat=currentCategory;
+  if(!newsCache.has("cat:"+cat))renderNewsSkeleton(newsList);
+  const{items,ts}=await cachedNews("cat:"+cat,NEWS_REFRESH_MS,async()=>{
     const pool=await getCuratedPool();
-    const queries=CATEGORY_QUERIES[currentCategory]||[];
+    const queries=CATEGORY_QUERIES[cat]||[];
     const queryItems=await fetchFeeds(queries.map(([q,lang])=>googleNewsUrl(q,lang)));
-    const keywords=CATEGORY_KEYWORDS[currentCategory];
+    const keywords=CATEGORY_KEYWORDS[cat];
     const poolItems=keywords
       ?pool.filter(it=>{const t=it.title.toLowerCase();return keywords.some(k=>t.includes(k))})
       :pool;
-    const items=dedupeByUrl([...poolItems,...queryItems]).sort((a,b)=>new Date(b.date)-new Date(a.date));
-    if(!items.length)throw new Error("empty");
+    return dedupeByUrl([...poolItems,...queryItems]).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  });
+  if(cat!==currentCategory)return;
+  if(items.length){
     renderNewsList(newsList,items);
-    newsUpdated.textContent="aggiornato "+new Date().toLocaleTimeString("it-IT");
-  }catch(e){
+    newsUpdated.textContent="aggiornato "+new Date(ts).toLocaleTimeString("it-IT");
+  }else{
+    renderEmptyState(newsList,"Nessuna notizia disponibile al momento, riprovo tra poco…");
     newsUpdated.textContent="feed non disponibile, riprovo…";
   }
 }
@@ -551,15 +579,20 @@ function setActiveRegion(region){
   loadRegionNews();
 }
 
+const REGION_CACHE_TTL=5*60*1000;
 async function loadRegionNews(){
-  renderNewsSkeleton(mapNewsList,4);
-  try{
-    const queries=REGION_QUERIES[currentRegion].map(([q,lang])=>googleNewsUrl(q,lang));
-    const items=dedupeByUrl(await fetchFeeds(queries));
-    if(!items.length)throw new Error("empty");
+  const region=currentRegion;
+  if(!newsCache.has("region:"+region))renderNewsSkeleton(mapNewsList,4);
+  const{items,ts}=await cachedNews("region:"+region,REGION_CACHE_TTL,async()=>{
+    const queries=REGION_QUERIES[region].map(([q,lang])=>googleNewsUrl(q,lang));
+    return dedupeByUrl(await fetchFeeds(queries));
+  });
+  if(region!==currentRegion)return;
+  if(items.length){
     renderNewsList(mapNewsList,items);
-    mapNewsUpdated.textContent="aggiornato "+new Date().toLocaleTimeString("it-IT");
-  }catch(e){
+    mapNewsUpdated.textContent="aggiornato "+new Date(ts).toLocaleTimeString("it-IT");
+  }else{
+    renderEmptyState(mapNewsList,"Nessuna notizia disponibile per questa area al momento, riprovo tra poco…");
     mapNewsUpdated.textContent="feed non disponibile, riprovo…";
   }
 }
