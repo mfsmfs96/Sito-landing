@@ -275,7 +275,8 @@ a{color:inherit}
 /* ---------- message ---------- */
 .message{justify-content:center;text-align:center;background:linear-gradient(180deg,var(--paper-2),var(--paper))}
 .message-inner{max-width:660px;margin:0 auto}
-.message-inner p{
+.message-inner .divider{margin:18px auto 30px}
+.message-inner p:not(.eyebrow):not(.num){
   font:400 clamp(19px,2.4vw,25px)/1.8 var(--serif);
   color:var(--ink);
   margin:0 0 38px;
@@ -287,7 +288,7 @@ a{color:inherit}
 .thought{align-items:flex-start;padding-top:150px;background:linear-gradient(180deg,var(--paper-2),var(--paper))}
 .thought-inner{max-width:640px;margin:0 auto;text-align:center}
 .thought-inner .divider{margin:18px auto}
-.thought-inner p:not(.eyebrow){
+.thought-inner p:not(.eyebrow):not(.num){
   font:400 clamp(18px,2.2vw,23px)/1.8 var(--serif);
   color:var(--ink);
   margin:0 0 30px;
@@ -315,8 +316,9 @@ a{color:inherit}
   position:relative;background:var(--paper-2);
   padding:64px clamp(20px,6vw,90px) 90px;
 }
-.side-head{max-width:420px}
-.side-head p{font:400 17px/1.6 var(--serif);color:var(--ink-soft);margin:14px 0 0}
+.side-head{max-width:640px;margin:0 auto;text-align:center}
+.side-head p:not(.num):not(.eyebrow):not(.day-date){font:400 17px/1.6 var(--serif);color:var(--ink-soft);margin:14px 0 0}
+.side-head .divider{margin:18px auto}
 .day-date{font:400 20px var(--serif);color:var(--ink)!important;letter-spacing:.04em}
 
 /* ---------- day / timeline ---------- */
@@ -393,7 +395,7 @@ a{color:inherit}
 .detail-card.open .plus{transform:rotate(45deg)}
 
 /* ---------- rsvp ---------- */
-.rsvp-deadline{display:flex;gap:18px;margin-top:26px;flex-wrap:wrap}
+.rsvp-deadline{display:flex;gap:18px;margin-top:26px;flex-wrap:wrap;justify-content:center}
 .rsvp-deadline div{display:flex;flex-direction:column;align-items:flex-start}
 .rsvp-deadline b{font:300 30px/1 var(--serif);color:var(--rose-deep)}
 .rsvp-deadline span{font:600 9px var(--sans);letter-spacing:.18em;color:var(--ink-soft);margin-top:5px;text-transform:uppercase}
