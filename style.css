@@ -283,6 +283,17 @@ a{color:inherit}
 .message-inner p:last-child{margin-bottom:0}
 .message-date{color:var(--rose-deep)}
 
+/* ---------- thought (pre-RSVP note) ---------- */
+.thought{align-items:flex-start;padding-top:150px;background:linear-gradient(180deg,var(--paper-2),var(--paper))}
+.thought-inner{max-width:640px;margin:0 auto;text-align:center}
+.thought-inner .divider{margin:18px auto}
+.thought-inner p:not(.eyebrow){
+  font:400 clamp(18px,2.2vw,23px)/1.8 var(--serif);
+  color:var(--ink);
+  margin:0 0 30px;
+}
+.thought-inner p:last-child{margin-bottom:0}
+
 /* ---------- generic band-scene layout (day / location / rsvp): clean photo band + solid content panel ---------- */
 .scene.band{
   display:block;padding:0;min-height:0;overflow:visible;
