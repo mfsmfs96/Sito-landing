@@ -212,6 +212,37 @@ body{
 .news-item .meta{display:flex;gap:8px;margin-top:7px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
 .news-item .meta .src{color:var(--info);font-weight:700}
 .news-item.empty{color:var(--muted);font-size:13px;text-align:center;padding:24px 18px;border-left-color:var(--border)}
+.deal-badge{
+  color:var(--warn);border:1px solid color-mix(in srgb, var(--warn) 50%, transparent);
+  background:color-mix(in srgb, var(--warn) 12%, transparent);
+  padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.04em;
+}
+.company-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.company-tag{
+  font-size:11px;font-weight:600;color:var(--info);text-decoration:none;
+  border:1px solid var(--border);border-radius:3px;padding:2px 8px;
+  background:var(--surface-2);transition:border-color .15s;
+}
+.company-tag:hover{border-color:var(--info)}
+
+/* Radar: trending companies */
+.trend-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.trend-row{background:var(--surface);border:1px solid var(--border);border-radius:4px}
+.trend-row a{
+  display:grid;grid-template-columns:1fr 2fr auto;align-items:center;gap:14px;
+  padding:10px 14px;text-decoration:none;color:var(--text);
+}
+.trend-row:hover{border-color:var(--accent)}
+.trend-name{font-size:13px;font-weight:600}
+.trend-bar-wrap{background:var(--surface-2);border-radius:2px;height:6px;overflow:hidden}
+.trend-bar{display:block;height:100%;background:var(--accent)}
+.trend-count{font-size:13px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;text-align:right}
+@media(max-width:600px){
+  .trend-row a{grid-template-columns:1fr auto;grid-template-areas:"name count" "bar bar"}
+  .trend-name{grid-area:name}
+  .trend-count{grid-area:count}
+  .trend-bar-wrap{grid-area:bar}
+}
 
 /* TradingView widget cards */
 .tv-widget-card{
