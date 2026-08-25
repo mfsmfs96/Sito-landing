@@ -136,9 +136,6 @@
   startCountdown(new Date("2027-07-04T17:00:00+02:00"), {
     days: $("#cdDays"), hours: $("#cdHours"), mins: $("#cdMins"), secs: $("#cdSecs")
   });
-  startCountdown(new Date("2027-05-15T23:59:59+02:00"), {
-    days: $("#rsvpDays")
-  });
 
   /* ---------- detail cards accordion ---------- */
   $$(".detail-card").forEach(card => {
