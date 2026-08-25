@@ -45,7 +45,6 @@
     if (e.key === "Escape") {
       menu.classList.remove("open");
       menuToggle.classList.remove("open");
-      closeModal(mapModal);
       closeModal(rsvpModal);
     }
   });
@@ -88,7 +87,10 @@
         const center = rect.top + rect.height / 2;
         const delta = (center - innerHeight / 2) / innerHeight;
         const amount = Math.max(-1, Math.min(1, delta));
-        bg.style.transform = `scale(1.12) translate3d(0, ${amount * -26}px, 0)`;
+        const isBand = scene.classList.contains("band");
+        const range = isBand ? 14 : 26;
+        const scale = isBand ? 1.16 : 1.12;
+        bg.style.transform = `scale(${scale}) translate3d(0, ${amount * -range}px, 0)`;
       });
     }
   }
@@ -151,14 +153,8 @@
   function openModal(overlay) { overlay.classList.add("show"); document.body.style.overflow = "hidden"; }
   function closeModal(overlay) { overlay.classList.remove("show"); document.body.style.overflow = ""; }
 
-  const mapModal  = $("#mapModal");
   const rsvpModal = $("#rsvpModal");
 
-  $("#openMap").addEventListener("click", () => {
-    const frame = $("#mapFrame");
-    if (frame && !frame.src.includes("openstreetmap")) frame.src = frame.dataset.src;
-    openModal(mapModal);
-  });
   $("#openRsvp").addEventListener("click", () => {
     rsvpFormView.style.display = "";
     rsvpSuccess.classList.remove("show");
@@ -166,10 +162,8 @@
     openModal(rsvpModal);
   });
 
-  [mapModal, rsvpModal].forEach(overlay => {
-    overlay.addEventListener("click", e => { if (e.target === overlay) closeModal(overlay); });
-    $$("[data-close]", overlay).forEach(btn => btn.addEventListener("click", () => closeModal(overlay)));
-  });
+  rsvpModal.addEventListener("click", e => { if (e.target === rsvpModal) closeModal(rsvpModal); });
+  $$("[data-close]", rsvpModal).forEach(btn => btn.addEventListener("click", () => closeModal(rsvpModal)));
 
   /* ---------- rsvp form ---------- */
   const rsvpForm = $("#rsvpForm");
