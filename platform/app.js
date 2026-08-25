@@ -24,7 +24,7 @@ themeToggle.addEventListener("click",()=>{
 });
 
 /* ---------- Tabs ---------- */
-const TABS=["indici","crypto","titoli","difesa","militare","armi","tech","tv","mappa"];
+const TABS=["indici","crypto","titoli","difesa","militare","armi","tech","radar","tv","mappa"];
 let currentTab=TABS[0];
 function activateTab(tab,persist=true){
   if(!TABS.includes(tab))return;
@@ -33,6 +33,7 @@ function activateTab(tab,persist=true){
   document.querySelectorAll(".tabpanel").forEach(p=>p.classList.toggle("active",p.id==="tab-"+tab));
   if(persist)store.set("pulse-tab",tab);
   if(NEWS_TAB_CATEGORY[tab])loadCategoryNews(NEWS_TAB_CATEGORY[tab]);
+  if(tab==="radar")loadRadar();
 }
 document.querySelectorAll("#tabs .tab").forEach(btn=>{
   btn.addEventListener("click",()=>activateTab(btn.dataset.tab));
@@ -418,6 +419,43 @@ const CATEGORY_KEYWORDS={
   tecnologia:["drone","droni","artificial intelligence","intelligenza artificiale","cyber","satellite","space force","spaziali","hypersonic","ipersonico","radar","stealth","furtivo","quantum","quantistico","robot","autonomous","autonomo","laser"]
 };
 
+/* ---------- Defense-industry company tagging (informational only, not investment advice) ---------- */
+const DEFENSE_COMPANIES=[
+  {name:"Lockheed Martin",aliases:["lockheed martin","lockheed"],symbol:"NYSE:LMT"},
+  {name:"RTX / Raytheon",aliases:["raytheon","rtx corporation","rtx corp"],symbol:"NYSE:RTX"},
+  {name:"Northrop Grumman",aliases:["northrop grumman","northrop"],symbol:"NYSE:NOC"},
+  {name:"General Dynamics",aliases:["general dynamics"],symbol:"NYSE:GD"},
+  {name:"Boeing",aliases:["boeing"],symbol:"NYSE:BA"},
+  {name:"L3Harris",aliases:["l3harris","l3 harris"],symbol:"NYSE:LHX"},
+  {name:"Huntington Ingalls",aliases:["huntington ingalls"],symbol:"NYSE:HII"},
+  {name:"Textron",aliases:["textron"],symbol:"NYSE:TXT"},
+  {name:"Leidos",aliases:["leidos"],symbol:"NYSE:LDOS"},
+  {name:"Kratos Defense",aliases:["kratos defense","kratos"],symbol:"NASDAQ:KTOS"},
+  {name:"AeroVironment",aliases:["aerovironment"],symbol:"NASDAQ:AVAV"},
+  {name:"Palantir",aliases:["palantir"],symbol:"NASDAQ:PLTR"},
+  {name:"BAE Systems",aliases:["bae systems"],symbol:"LSE:BA."},
+  {name:"Rheinmetall",aliases:["rheinmetall"],symbol:"XETR:RHM"},
+  {name:"Thales",aliases:["thales"],symbol:"EURONEXT:HO"},
+  {name:"Leonardo",aliases:["leonardo spa","leonardo s.p.a","leonardo drs"],symbol:"MIL:LDO"},
+  {name:"Saab",aliases:["saab ab","saab group"],symbol:"OMXSTO:SAAB_B"},
+  {name:"Elbit Systems",aliases:["elbit systems","elbit"],symbol:"NASDAQ:ESLT"},
+  {name:"Kongsberg",aliases:["kongsberg"],symbol:"EURONEXT:KOG"},
+  {name:"Fincantieri",aliases:["fincantieri"],symbol:"MIL:FCT"},
+  {name:"Dassault Aviation",aliases:["dassault aviation"],symbol:"EURONEXT:AM"},
+  {name:"Hensoldt",aliases:["hensoldt"],symbol:"XETR:HAG"},
+  {name:"Airbus",aliases:["airbus"],symbol:"EURONEXT:AIR"},
+  {name:"Babcock International",aliases:["babcock international"],symbol:"LSE:BAB"}
+];
+function tagCompanies(title){
+  const t=title.toLowerCase();
+  return DEFENSE_COMPANIES.filter(c=>c.aliases.some(a=>t.includes(a)));
+}
+const DEAL_KEYWORDS=["contract","deal","award","order","procurement","tender","agreement","acquisition","acquire","stake","invest","funding","billion","million","$","€","accordo","contratto","commessa","appalto","acquisizione","investimento","miliardi","milioni"];
+function isDealNews(title){
+  const t=title.toLowerCase();
+  return DEAL_KEYWORDS.some(k=>t.includes(k));
+}
+
 function timeAgo(dateStr){
   const diff=Math.max(0,(Date.now()-new Date(dateStr).getTime())/1000);
   if(diff<60)return"ora";
@@ -436,11 +474,22 @@ function renderNewsSkeleton(listEl,count=6){
     </li>
   `).join("");
 }
+function companyBadges(title){
+  const companies=tagCompanies(title);
+  if(!companies.length)return"";
+  return `<div class="company-tags">`+companies.map(c=>
+    `<a class="company-tag" href="https://www.tradingview.com/symbols/${encodeURIComponent(c.symbol.replace(":","-").replace(".",""))}/" target="_blank" rel="noopener noreferrer" title="Vedi quotazione ${c.name}">${c.name}</a>`
+  ).join("")+`</div>`;
+}
 function renderNewsList(listEl,items){
   listEl.innerHTML=items.slice(0,24).map(item=>`
     <li class="news-item">
       <a href="${item.url}" target="_blank" rel="noopener noreferrer">${item.title}</a>
-      <div class="meta"><span class="src">${item.source}</span><span>${timeAgo(item.date)}</span></div>
+      <div class="meta">
+        <span class="src">${item.source}</span><span>${timeAgo(item.date)}</span>
+        ${isDealNews(item.title)?'<span class="deal-badge">DEAL</span>':""}
+      </div>
+      ${companyBadges(item.title)}
     </li>
   `).join("");
 }
@@ -543,6 +592,59 @@ setInterval(()=>{
   const cat=NEWS_TAB_CATEGORY[currentTab];
   if(cat)loadCategoryNews(cat);
 },NEWS_REFRESH_MS);
+
+/* ---------- Radar: defense-industry mention trends and deal signals ---------- */
+/* Informational aggregation only — factual counts and links to live quotes,
+   never a "buy/finance this" recommendation. */
+function gatherAllNewsItems(){
+  const sources=["cat:generale","cat:militari","cat:armamenti","cat:tecnologia"];
+  let all=curatedPool||[];
+  sources.forEach(key=>{
+    const cached=newsCache.get(key);
+    if(cached)all=all.concat(cached.items);
+  });
+  return dedupeByUrl(all);
+}
+function renderTrending(container,items){
+  const ranked=DEFENSE_COMPANIES.map(c=>{
+    let count=0;
+    items.forEach(it=>{if(tagCompanies(it.title).some(m=>m.name===c.name))count++});
+    return{company:c,count};
+  }).filter(r=>r.count>0).sort((a,b)=>b.count-a.count).slice(0,12);
+  if(!ranked.length){
+    container.innerHTML='<li class="news-item empty">Nessuna menzione rilevata nelle notizie attualmente in cache.</li>';
+    return;
+  }
+  const max=ranked[0].count;
+  container.innerHTML=ranked.map(r=>`
+    <li class="trend-row">
+      <a href="https://www.tradingview.com/symbols/${encodeURIComponent(r.company.symbol.replace(":","-").replace(".",""))}/" target="_blank" rel="noopener noreferrer">
+        <span class="trend-name">${r.company.name}</span>
+        <span class="trend-bar-wrap"><span class="trend-bar" style="width:${(r.count/max*100).toFixed(0)}%"></span></span>
+        <span class="trend-count">${r.count}</span>
+      </a>
+    </li>
+  `).join("");
+}
+function renderDeals(listEl,items){
+  const deals=items.filter(it=>isDealNews(it.title)).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(!deals.length){
+    renderEmptyState(listEl,"Nessuna notizia di contratti/deal rilevata al momento.");
+    return;
+  }
+  renderNewsList(listEl,deals);
+}
+const trendList=document.querySelector("#trendList");
+const dealsList=document.querySelector("#dealsList");
+const radarUpdated=document.querySelector("#radarUpdated");
+async function loadRadar(){
+  await Promise.all(["generale","militari","armamenti","tecnologia"].map(loadCategoryNews));
+  const items=gatherAllNewsItems();
+  renderTrending(trendList,items);
+  renderDeals(dealsList,items);
+  radarUpdated.textContent="aggiornato "+new Date().toLocaleTimeString("it-IT");
+}
+setInterval(()=>{if(currentTab==="radar")loadRadar()},NEWS_REFRESH_MS);
 
 /* ---------- Interactive map ---------- */
 const REGION_NAMES={it:"Italia",eu:"Europa",na:"Nord America",sa:"Sud America",me:"Medio Oriente",as:"Asia",af:"Africa",oc:"Oceania"};
