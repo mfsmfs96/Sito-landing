@@ -69,20 +69,15 @@
   </section>
 
   <!-- 02 — THE DAY -->
-  <section class="scene side day" id="s2">
-    <div class="bg" style="background-image:url(assets/bg-day.jpg)"></div>
-    <div class="scrim"></div>
-    <div class="scene-content">
+  <section class="scene band day" id="s2">
+    <div class="band-photo"><div class="bg" style="background-image:url(assets/bg-day.jpg)"></div></div>
+    <div class="band-panel">
+      <div class="scene-content">
       <div class="side-head">
         <p class="num" data-reveal style="--i:0">02</p>
         <p class="eyebrow" data-reveal style="--i:1">The Day</p>
         <div class="divider" data-reveal style="--i:2"></div>
         <p class="day-date" data-reveal style="--i:3">4 Luglio 2027</p>
-        <div data-reveal style="--i:4">
-          <button class="btn ghost" data-target="timeline2">Scopri il programma
-            <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
       </div>
 
       <div class="timeline" id="timeline2">
@@ -111,24 +106,21 @@
           <div class="tl-place">Palazzo dei Principi Lanza</div>
         </div>
       </div>
+      </div>
     </div>
   </section>
 
   <!-- 03 — LOCATION -->
-  <section class="scene side location" id="s3">
-    <div class="bg" style="background-image:url(assets/bg-location.jpg)"></div>
-    <div class="scrim"></div>
-    <div class="scene-content">
+  <section class="scene band location" id="s3">
+    <div class="band-photo"><div class="bg" style="background-image:url(assets/bg-location.jpg)"></div></div>
+    <div class="band-panel">
+      <div class="scene-content">
       <div class="side-head">
         <p class="num" data-reveal style="--i:0">03</p>
         <p class="eyebrow" data-reveal style="--i:1">The Location</p>
         <div class="divider" data-reveal style="--i:2"></div>
         <p data-reveal style="--i:3">Convento dei Minimi<br>Cirella di Diamante (CS)</p>
-        <div class="map-btn-wrap" data-reveal style="--i:4">
-          <button class="btn ghost" id="openMap">Scopri la location
-            <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
+      </div>
       </div>
     </div>
   </section>
@@ -184,10 +176,10 @@
   </section>
 
   <!-- 05 — RSVP -->
-  <section class="scene side rsvp" id="s5">
-    <div class="bg" style="background-image:url(assets/bg-rsvp.jpg)"></div>
-    <div class="scrim"></div>
-    <div class="scene-content">
+  <section class="scene band rsvp" id="s5">
+    <div class="band-photo"><div class="bg" style="background-image:url(assets/bg-rsvp.jpg)"></div></div>
+    <div class="band-panel">
+      <div class="scene-content">
       <div class="side-head">
         <p class="num" data-reveal style="--i:0">05</p>
         <p class="eyebrow" data-reveal style="--i:1">RSVP</p>
@@ -212,29 +204,11 @@
           <svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>
+      </div>
     </div>
   </section>
 
 </main>
-
-<!-- LOCATION MODAL -->
-<div class="modal-overlay" id="mapModal">
-  <div class="modal-card">
-    <button class="modal-close" data-close>&times;</button>
-    <div class="modal-body">
-      <div class="modal-eyebrow">The Location</div>
-      <h2>Convento dei Minimi</h2>
-      <p>Cirella di Diamante (CS) — un antico convento affacciato sulla costa tirrenica, cornice della cerimonia.</p>
-      <iframe class="map-frame" id="mapFrame" loading="lazy" title="Mappa Convento dei Minimi, Cirella di Diamante"
-        src="about:blank" data-src="https://www.openstreetmap.org/export/embed.html?bbox=15.8210%2C39.6900%2C15.8410%2C39.7060&layer=mapnik&marker=39.6980%2C15.8310"></iframe>
-      <div class="map-links">
-        <a class="btn ghost" href="https://www.google.com/maps/search/?api=1&query=Convento+dei+Minimi+Cirella+di+Diamante+CS" target="_blank" rel="noopener">Apri in Google Maps
-          <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- RSVP MODAL -->
 <div class="modal-overlay" id="rsvpModal">
