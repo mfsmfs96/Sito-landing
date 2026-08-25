@@ -13,7 +13,7 @@ function applyTheme(t){
 function effectiveTheme(){
   return savedTheme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");
 }
-let savedTheme=store.get("pulse-theme","");
+let savedTheme=store.get("pulse-theme","dark");
 applyTheme(savedTheme);
 themeToggle.addEventListener("click",()=>{
   const current=effectiveTheme();
