@@ -250,6 +250,8 @@ a{color:inherit}
 }
 .countdown div{display:flex;flex-direction:column;align-items:center;min-width:58px}
 .countdown b{font:300 clamp(26px,4vw,38px)/1 var(--serif);color:var(--ink)}
+.countdown b.tick{animation:digitTick .4s var(--ease)}
+@keyframes digitTick{0%{transform:translateY(-8px);opacity:0}100%{transform:translateY(0);opacity:1}}
 .countdown span{font:600 9px var(--sans);letter-spacing:.2em;color:var(--rose-deep);margin-top:6px;text-transform:uppercase}
 .scroll-cue{
   position:absolute;left:50%;bottom:30px;transform:translateX(-50%);
