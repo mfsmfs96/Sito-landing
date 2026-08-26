@@ -110,6 +110,19 @@ a{color:inherit}
 }
 @media(hover:hover) and (pointer:fine){ .glow.active{opacity:1} }
 
+.petal{
+  position:fixed;z-index:250;pointer-events:none;
+  border-radius:0 100% 0 100%;
+  transform:translate(-50%,-50%) rotate(0deg);
+  opacity:.9;
+  animation:petal-fall linear forwards;
+  will-change:transform,opacity;
+}
+@keyframes petal-fall{
+  0%{transform:translate(-50%,-50%) translate(0,0) rotate(0deg);opacity:.9}
+  100%{transform:translate(-50%,-50%) translate(var(--dx),var(--fall)) rotate(var(--rot));opacity:0}
+}
+
 /* ---------- loader ---------- */
 #loader{
   position:fixed;z-index:200;inset:0;background:var(--ink-deep);

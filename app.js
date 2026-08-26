@@ -245,4 +245,27 @@
   /* ---------- back to top ---------- */
   const toTop = $("#toTop");
   if (toTop) toTop.addEventListener("click", () => scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }));
+
+  /* ---------- interactive petals on tap ---------- */
+  if (!reduceMotion) {
+    const PETAL_COLORS = ["var(--rose)", "var(--rose-soft)", "var(--rose-deep)"];
+    document.addEventListener("click", e => {
+      if (e.target.closest("input, textarea, select, #rsvpModal")) return;
+      const count = 5 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < count; i++) {
+        const petal = document.createElement("i");
+        petal.className = "petal";
+        const angle = (Math.random() - .5) * 140;
+        const dist = 60 + Math.random() * 90;
+        const dx = Math.sin(angle * Math.PI / 180) * dist;
+        const fall = 90 + Math.random() * 90;
+        const rot = (Math.random() - .5) * 260;
+        const dur = 900 + Math.random() * 700;
+        const size = 7 + Math.random() * 7;
+        petal.style.cssText = `left:${e.clientX}px;top:${e.clientY}px;width:${size}px;height:${size}px;background:${PETAL_COLORS[i % PETAL_COLORS.length]};--dx:${dx}px;--fall:${fall}px;--rot:${rot}deg;animation-duration:${dur}ms`;
+        document.body.appendChild(petal);
+        petal.addEventListener("animationend", () => petal.remove());
+      }
+    });
+  }
 })();
