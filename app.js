@@ -168,6 +168,28 @@
       $$(".detail-card").forEach(c => c.classList.remove("open"));
       if (willOpen) card.classList.add("open");
     });
+    card.addEventListener("keydown", e => {
+      if (card.getAttribute("role") === "button" && (e.key === "Enter" || e.key === " ")) {
+        e.preventDefault();
+        card.click();
+      }
+    });
+  });
+
+  /* ---------- "da dove vieni" origin selector ---------- */
+  const ORIGIN_INFO = {
+    milano: "Da Milano: in auto sono circa 950 km (indicativamente 9-10 ore) lungo A1 e A2 — meglio spezzare il viaggio con una sosta. In aereo, i voli più comodi atterrano a Napoli Capodichino, da cui proseguire in auto per circa 2 ore. In treno: Frecciarossa fino a Napoli o Salerno, poi transfer per gli ultimi chilometri.",
+    belluno: "Da Belluno: il tragitto è lungo, circa 1.100 km. In auto servono indicativamente 11-12 ore, quindi consigliamo una sosta intermedia. In aereo, il collegamento più pratico è volare da Venezia verso Napoli e proseguire poi in auto per circa 2 ore. In treno: Belluno–Venezia–Napoli con cambi, poi transfer finale.",
+    roma: "Da Roma: è la partenza più comoda, circa 430 km. In auto bastano indicativamente 4h30-5h lungo A1 e A2. In treno: Frecciarossa o Intercity fino a Salerno, poi un transfer di circa un'ora per gli ultimi chilometri fino a San Nicola Arcella."
+  };
+  const originText = $("#originText");
+  $$(".origin-btn").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      $$(".origin-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      if (originText) originText.textContent = ORIGIN_INFO[btn.dataset.origin] || "";
+    });
   });
 
   /* ---------- modals ---------- */

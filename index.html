@@ -185,13 +185,22 @@
           <p class="short">Elegant</p>
           <div class="detail-more">Vi chiediamo un abito elegante da cerimonia. Toni caldi e naturali sono benvenuti — evitate il bianco, riservato alla sposa.</div>
         </button>
-        <button class="detail-card" data-reveal style="--i:2">
+        <div class="detail-card" data-reveal style="--i:2" tabindex="0" role="button">
           <span class="plus">+</span>
           <svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>
           <h3>Come arrivare</h3>
           <p class="short">Indicazioni e parcheggi</p>
-          <div class="detail-more">Palazzo dei Principi Lanza è raggiungibile in auto dalla SS18. Parcheggio riservato agli invitati disponibile in loco.</div>
-        </button>
+          <div class="detail-more">
+            <p>Palazzo dei Principi Lanza è raggiungibile in auto dalla SS18. Parcheggio riservato agli invitati disponibile in loco.</p>
+            <p class="origin-label">Da dove parti?</p>
+            <div class="origin-selector">
+              <button type="button" class="origin-btn" data-origin="milano">Milano</button>
+              <button type="button" class="origin-btn" data-origin="belluno">Belluno</button>
+              <button type="button" class="origin-btn" data-origin="roma">Roma</button>
+            </div>
+            <p class="origin-text" id="originText">Seleziona la tua città di partenza per le indicazioni.</p>
+          </div>
+        </div>
         <button class="detail-card" data-reveal style="--i:3">
           <span class="plus">+</span>
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2" stroke-linecap="round"/></svg>
