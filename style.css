@@ -79,6 +79,7 @@ a{color:inherit}
   letter-spacing:.3em;
   transform:translateY(-2px);
 }
+.btn:active{transform:scale(.94)}
 .btn svg{width:14px;height:14px;transition:transform .35s var(--ease)}
 .btn:hover svg{transform:translateX(4px)}
 .btn.ghost{background:transparent}
@@ -208,7 +209,10 @@ a{color:inherit}
   background-size:cover;background-position:center;
   transform:scale(1.12) translate3d(0,0,0);
   will-change:transform;
+  filter:grayscale(45%) brightness(.9) saturate(.85);
+  transition:filter 1.6s var(--ease);
 }
+.scene.is-inview .bg{filter:grayscale(0%) brightness(1) saturate(1)}
 .scene .scrim{position:absolute;inset:0;z-index:1}
 .scene-content{position:relative;z-index:2;width:100%}
 
@@ -250,6 +254,12 @@ a{color:inherit}
 }
 .countdown div{display:flex;flex-direction:column;align-items:center;min-width:58px}
 .countdown b{font:300 clamp(26px,4vw,38px)/1 var(--serif);color:var(--ink)}
+.countdown b.tick{animation:digitTick .55s var(--ease)}
+@keyframes digitTick{
+  0%{transform:translateY(-16px) scale(1.15);opacity:0;color:var(--rose-deep)}
+  55%{transform:translateY(2px) scale(1.06);opacity:1;color:var(--rose-deep)}
+  100%{transform:translateY(0) scale(1);opacity:1;color:var(--ink)}
+}
 .countdown span{font:600 9px var(--sans);letter-spacing:.2em;color:var(--rose-deep);margin-top:6px;text-transform:uppercase}
 .scroll-cue{
   position:absolute;left:50%;bottom:30px;transform:translateX(-50%);

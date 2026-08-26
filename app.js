@@ -112,8 +112,32 @@
     addEventListener("mouseleave", () => glow.classList.remove("active"));
   }
 
+  /* ---------- magnetic buttons (desktop only) ---------- */
+  if (matchMedia("(hover:hover) and (pointer:fine)").matches && !reduceMotion) {
+    $$(".btn").forEach(btn => {
+      btn.addEventListener("mousemove", e => {
+        const r = btn.getBoundingClientRect();
+        const x = e.clientX - r.left - r.width / 2;
+        const y = e.clientY - r.top - r.height / 2;
+        btn.style.transform = `translate(${x * .25}px, ${y * .25}px)`;
+      });
+      btn.addEventListener("mouseleave", () => { btn.style.transform = ""; });
+    });
+  }
+
   /* ---------- countdowns ---------- */
   function startCountdown(targetDate, els) {
+    const prev = {};
+    function setVal(el, key, val) {
+      if (!el || prev[key] === val) return;
+      prev[key] = val;
+      el.textContent = val;
+      if (!reduceMotion) {
+        el.classList.remove("tick");
+        void el.offsetWidth;
+        el.classList.add("tick");
+      }
+    }
     function tick() {
       const diff = targetDate - Date.now();
       if (diff <= 0) {
@@ -124,10 +148,10 @@
       const h = Math.floor((diff % 86400000) / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
       const s = Math.floor((diff % 60000) / 1000);
-      if (els.days)  els.days.textContent  = String(d);
-      if (els.hours) els.hours.textContent = String(h).padStart(2, "0");
-      if (els.mins)  els.mins.textContent  = String(m).padStart(2, "0");
-      if (els.secs)  els.secs.textContent  = String(s).padStart(2, "0");
+      setVal(els.days,  "days",  String(d));
+      setVal(els.hours, "hours", String(h).padStart(2, "0"));
+      setVal(els.mins,  "mins",  String(m).padStart(2, "0"));
+      setVal(els.secs,  "secs",  String(s).padStart(2, "0"));
     }
     tick();
     return setInterval(tick, 1000);
