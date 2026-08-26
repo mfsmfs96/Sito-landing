@@ -398,7 +398,7 @@ a{color:inherit}
   font:400 13px/1.6 var(--serif);color:var(--ink-soft);margin-top:0;text-align:left;
 }
 .detail-more p{margin:0 0 10px}
-.detail-card.open .detail-more{max-height:420px;margin-top:14px}
+.detail-card.open .detail-more{margin-top:14px}
 .origin-label{font:600 11px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
 .origin-selector{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 .origin-btn{

@@ -162,11 +162,22 @@
   });
 
   /* ---------- detail cards accordion ---------- */
+  function fitDetailMore(card) {
+    const more = card.querySelector(".detail-more");
+    if (more) more.style.maxHeight = more.scrollHeight + "px";
+  }
   $$(".detail-card").forEach(card => {
     card.addEventListener("click", () => {
       const willOpen = !card.classList.contains("open");
-      $$(".detail-card").forEach(c => c.classList.remove("open"));
-      if (willOpen) card.classList.add("open");
+      $$(".detail-card").forEach(c => {
+        c.classList.remove("open");
+        const m = c.querySelector(".detail-more");
+        if (m) m.style.maxHeight = "";
+      });
+      if (willOpen) {
+        card.classList.add("open");
+        fitDetailMore(card);
+      }
     });
     card.addEventListener("keydown", e => {
       if (card.getAttribute("role") === "button" && (e.key === "Enter" || e.key === " ")) {
@@ -174,6 +185,10 @@
         card.click();
       }
     });
+  });
+  addEventListener("resize", () => {
+    const openCard = document.querySelector(".detail-card.open");
+    if (openCard) fitDetailMore(openCard);
   });
 
   /* ---------- "da dove vieni" origin selector ---------- */
@@ -189,6 +204,8 @@
       $$(".origin-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       if (originText) originText.textContent = ORIGIN_INFO[btn.dataset.origin] || "";
+      const card = btn.closest(".detail-card");
+      if (card && card.classList.contains("open")) fitDetailMore(card);
     });
   });
 
