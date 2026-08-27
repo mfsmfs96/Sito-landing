@@ -213,7 +213,7 @@
   const originGoBtn = $("#originGoBtn");
 
   function openDirectionsFrom(origin) {
-    const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(DEST_ADDR)}&travelmode=driving`;
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(DEST_ADDR)}`;
     window.open(url, "_blank", "noopener");
   }
 
