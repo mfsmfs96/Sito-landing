@@ -206,7 +206,7 @@
   detailFull.addEventListener("click", e => { if (e.target === detailFull) closeDetailFull(); });
 
   /* ---------- "da dove parti" trip planner ---------- */
-  const DEST_ADDR = "Palazzo dei Principi Lanza, San Nicola Arcella (CS)";
+  const DEST_ADDR = "Praia a Mare (CS)";
   const originInput = $("#originInput");
   const originText = $("#originText");
   const originGeoBtn = $("#originGeoBtn");
