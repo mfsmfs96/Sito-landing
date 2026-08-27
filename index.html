@@ -199,11 +199,11 @@
             <p>Tutte le location dispongono di ampi parcheggi riservati agli invitati.</p>
             <p class="origin-label">Da dove parti?</p>
             <div class="origin-selector">
-              <button type="button" class="origin-btn" data-origin="milano">Milano</button>
-              <button type="button" class="origin-btn" data-origin="belluno">Belluno</button>
-              <button type="button" class="origin-btn" data-origin="roma">Roma</button>
+              <input type="text" class="origin-input" id="originInput" placeholder="Città o indirizzo di partenza" autocomplete="off">
+              <button type="button" class="origin-btn" id="originGeoBtn">Usa la mia posizione</button>
+              <button type="button" class="origin-btn primary" id="originGoBtn">Calcola il percorso</button>
             </div>
-            <p class="origin-text" id="originText">Seleziona la tua città di partenza per le indicazioni.</p>
+            <p class="origin-text" id="originText">Il percorso si aprirà su Google Maps, verso il Palazzo dei Principi Lanza.</p>
           </div>
         </div>
         <button class="detail-card" data-reveal style="--i:3">
