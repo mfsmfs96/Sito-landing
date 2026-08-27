@@ -274,6 +274,11 @@ a{color:inherit}
 }
 .hero-venue{font:400 15px/1.9 var(--serif);letter-spacing:.06em;color:var(--ink-soft);text-transform:uppercase;font-size:14px}
 .hero-cta{margin-top:34px}
+.map-link{
+  color:inherit;text-decoration:underline;text-decoration-color:var(--rose-dim);
+  text-underline-offset:3px;transition:text-decoration-color .3s var(--ease),color .3s var(--ease);
+}
+.map-link:hover{color:var(--rose-deep);text-decoration-color:var(--rose-deep)}
 .countdown{
   display:flex;gap:clamp(10px,3vw,26px);justify-content:center;margin-top:44px;flex-wrap:wrap;
 }
