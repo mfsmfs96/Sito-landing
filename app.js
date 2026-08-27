@@ -158,7 +158,7 @@
     return setInterval(tick, 1000);
   }
 
-  startCountdown(new Date("2027-07-04T17:00:00+02:00"), {
+  startCountdown(new Date("2027-07-04T16:30:00+02:00"), {
     days: $("#cdDays"), hours: $("#cdHours"), mins: $("#cdMins"), secs: $("#cdSecs")
   });
 
