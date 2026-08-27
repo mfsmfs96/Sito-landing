@@ -205,21 +205,63 @@
   $("#detailFullClose").addEventListener("click", closeDetailFull);
   detailFull.addEventListener("click", e => { if (e.target === detailFull) closeDetailFull(); });
 
-  /* ---------- "da dove vieni" origin selector ---------- */
-  const ORIGIN_INFO = {
-    milano: "Da Milano: in auto sono circa 950 km (indicativamente 9-10 ore) lungo A1 e A2 — meglio spezzare il viaggio con una sosta. In aereo, potete atterrare a Napoli Capodichino (più voli disponibili, poi circa 2 ore d'auto) oppure a Salerno Costa d'Amalfi, scalo più piccolo ma più vicino alla location (circa 1 ora d'auto). In treno: Frecciarossa fino a Napoli o Salerno, poi transfer per gli ultimi chilometri.",
-    belluno: "Da Belluno: il tragitto è lungo, circa 1.100 km. In auto servono indicativamente 11-12 ore, quindi consigliamo una sosta intermedia. In aereo, il collegamento più pratico è volare da Venezia verso Napoli Capodichino o, se disponibile sulla tratta, verso Salerno Costa d'Amalfi (più vicino alla location); da lì si prosegue in auto per circa 1-2 ore a seconda dello scalo. In treno: Belluno–Venezia–Napoli con cambi, poi transfer finale.",
-    roma: "Da Roma: è la partenza più comoda, circa 430 km. In auto bastano indicativamente 4h30-5h lungo A1 e A2. In treno: Frecciarossa o Intercity fino a Salerno, poi un transfer di circa un'ora per gli ultimi chilometri fino a San Nicola Arcella."
-  };
+  /* ---------- "da dove parti" trip planner ---------- */
+  const DEST_ADDR = "Palazzo dei Principi Lanza, San Nicola Arcella (CS)";
+  const originInput = $("#originInput");
   const originText = $("#originText");
-  $$(".origin-btn").forEach(btn => {
-    btn.addEventListener("click", e => {
+  const originGeoBtn = $("#originGeoBtn");
+  const originGoBtn = $("#originGoBtn");
+
+  function openDirectionsFrom(origin) {
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(DEST_ADDR)}&travelmode=driving`;
+    window.open(url, "_blank", "noopener");
+  }
+
+  if (originGoBtn) {
+    originGoBtn.addEventListener("click", e => {
       e.stopPropagation();
-      $$(".origin-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      if (originText) originText.textContent = ORIGIN_INFO[btn.dataset.origin] || "";
+      const val = originInput ? originInput.value.trim() : "";
+      if (!val) {
+        if (originText) originText.textContent = "Inserisci prima una città o un indirizzo di partenza.";
+        if (originInput) originInput.focus();
+        return;
+      }
+      if (originText) originText.textContent = `Percorso aperto in Google Maps da "${val}".`;
+      openDirectionsFrom(val);
     });
-  });
+  }
+
+  if (originGeoBtn) {
+    originGeoBtn.addEventListener("click", e => {
+      e.stopPropagation();
+      if (!navigator.geolocation) {
+        if (originText) originText.textContent = "La geolocalizzazione non è supportata su questo dispositivo.";
+        return;
+      }
+      if (originText) originText.textContent = "Rilevamento della posizione in corso…";
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const coords = `${pos.coords.latitude},${pos.coords.longitude}`;
+          if (originText) originText.textContent = "Percorso aperto in Google Maps dalla tua posizione attuale.";
+          openDirectionsFrom(coords);
+        },
+        () => {
+          if (originText) originText.textContent = "Non è stato possibile accedere alla tua posizione. Prova a scrivere la città manualmente.";
+        },
+        { timeout: 10000 }
+      );
+    });
+  }
+
+  if (originInput) {
+    originInput.addEventListener("click", e => e.stopPropagation());
+    originInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (originGoBtn) originGoBtn.click();
+      }
+    });
+  }
 
   /* ---------- modals ---------- */
   function openModal(overlay) { overlay.classList.add("show"); document.body.style.overflow = "hidden"; }

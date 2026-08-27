@@ -452,6 +452,15 @@ a{color:inherit}
 }
 .origin-btn:hover{border-color:var(--rose)}
 .origin-btn.active{background:var(--rose);border-color:var(--rose);color:var(--panel)}
+.origin-btn.primary{background:var(--rose);border-color:var(--rose);color:var(--panel)}
+.origin-btn.primary:hover{opacity:.88}
+.origin-input{
+  flex:1;min-width:180px;
+  font:400 13px var(--sans);color:var(--ink);
+  padding:8px 12px;border:1px solid var(--border);background:var(--panel);
+  transition:border-color .3s var(--ease);
+}
+.origin-input:focus{outline:none;border-color:var(--rose)}
 .origin-text{font-style:italic}
 .detail-card .plus{
   position:absolute;right:10px;top:10px;width:20px;height:20px;color:var(--rose-deep);
