@@ -46,6 +46,7 @@
       menu.classList.remove("open");
       menuToggle.classList.remove("open");
       closeModal(rsvpModal);
+      closeDetailFull();
     }
   });
 
@@ -161,35 +162,48 @@
     days: $("#cdDays"), hours: $("#cdHours"), mins: $("#cdMins"), secs: $("#cdSecs")
   });
 
-  /* ---------- detail cards accordion ---------- */
-  function fitDetailMore(card) {
+  /* ---------- detail cards: full-page view ---------- */
+  const detailFull = $("#detailFull");
+  const detailFullIcon = $("#detailFullIcon");
+  const detailFullTitle = $("#detailFullTitle");
+  const detailFullText = $("#detailFullText");
+  let activeDetailMore = null, activeDetailParent = null, activeDetailNext = null;
+
+  function openDetailFull(card) {
+    const svg = card.querySelector("svg");
+    const h3 = card.querySelector("h3");
     const more = card.querySelector(".detail-more");
-    if (more) more.style.maxHeight = more.scrollHeight + "px";
+    detailFullIcon.innerHTML = "";
+    if (svg) detailFullIcon.appendChild(svg.cloneNode(true));
+    detailFullTitle.textContent = h3 ? h3.textContent : "";
+    if (more) {
+      activeDetailMore = more;
+      activeDetailParent = more.parentNode;
+      activeDetailNext = more.nextSibling;
+      detailFullText.appendChild(more);
+    }
+    detailFull.classList.add("show");
+    document.body.style.overflow = "hidden";
+  }
+  function closeDetailFull() {
+    detailFull.classList.remove("show");
+    document.body.style.overflow = "";
+    if (activeDetailMore && activeDetailParent) {
+      activeDetailParent.insertBefore(activeDetailMore, activeDetailNext);
+    }
+    activeDetailMore = activeDetailParent = activeDetailNext = null;
   }
   $$(".detail-card").forEach(card => {
-    card.addEventListener("click", () => {
-      const willOpen = !card.classList.contains("open");
-      $$(".detail-card").forEach(c => {
-        c.classList.remove("open");
-        const m = c.querySelector(".detail-more");
-        if (m) m.style.maxHeight = "";
-      });
-      if (willOpen) {
-        card.classList.add("open");
-        fitDetailMore(card);
-      }
-    });
+    card.addEventListener("click", () => openDetailFull(card));
     card.addEventListener("keydown", e => {
       if (card.getAttribute("role") === "button" && (e.key === "Enter" || e.key === " ")) {
         e.preventDefault();
-        card.click();
+        openDetailFull(card);
       }
     });
   });
-  addEventListener("resize", () => {
-    const openCard = document.querySelector(".detail-card.open");
-    if (openCard) fitDetailMore(openCard);
-  });
+  $("#detailFullClose").addEventListener("click", closeDetailFull);
+  detailFull.addEventListener("click", e => { if (e.target === detailFull) closeDetailFull(); });
 
   /* ---------- "da dove vieni" origin selector ---------- */
   const ORIGIN_INFO = {
@@ -204,8 +218,6 @@
       $$(".origin-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       if (originText) originText.textContent = ORIGIN_INFO[btn.dataset.origin] || "";
-      const card = btn.closest(".detail-card");
-      if (card && card.classList.contains("open")) fitDetailMore(card);
     });
   });
 
@@ -250,7 +262,7 @@
   if (!reduceMotion) {
     const PETAL_COLORS = ["var(--rose)", "var(--rose-soft)", "var(--rose-deep)"];
     document.addEventListener("click", e => {
-      if (e.target.closest("input, textarea, select, #rsvpModal")) return;
+      if (e.target.closest("input, textarea, select, #rsvpModal, #detailFull")) return;
       const count = 5 + Math.floor(Math.random() * 3);
       for (let i = 0; i < count; i++) {
         const petal = document.createElement("i");

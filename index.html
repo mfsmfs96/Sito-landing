@@ -185,10 +185,10 @@
       <div class="detail-grid">
         <button class="detail-card" data-reveal style="--i:1">
           <span class="plus">+</span>
-          <svg viewBox="0 0 24 24"><path d="M9 3l3 2 3-2 2 4-2 2 1 12H8L9 9 7 7z" stroke-linejoin="round"/></svg>
-          <h3>Dress Code</h3>
-          <p class="short">Elegant</p>
-          <div class="detail-more">Vi chiediamo un abito elegante da cerimonia. Toni caldi e naturali sono benvenuti — evitate il bianco, riservato alla sposa.</div>
+          <svg viewBox="0 0 24 24"><path d="M12 3 20 19Q12 22 4 19Z" stroke-linejoin="round"/><circle cx="10" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="14" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="11" cy="17" r="1" fill="currentColor" stroke="none"/></svg>
+          <h3>Pizza Party</h3>
+          <p class="short">Sabato sera al Budda Beach</p>
+          <div class="detail-more">Il sabato sera, prima del matrimonio, vi aspettiamo per un pizza party presso il lido Budda Beach.</div>
         </button>
         <div class="detail-card" data-reveal style="--i:2" tabindex="0" role="button">
           <span class="plus">+</span>
@@ -196,7 +196,7 @@
           <h3>Come arrivare</h3>
           <p class="short">Indicazioni e parcheggi</p>
           <div class="detail-more">
-            <p>Palazzo dei Principi Lanza è raggiungibile in auto dalla SS18. Parcheggio riservato agli invitati disponibile in loco.</p>
+            <p>Palazzo dei Principi Lanza è raggiungibile in auto dalla SS18. Tutte le location dispongono di ampi parcheggi riservati agli invitati.</p>
             <p class="origin-label">Da dove parti?</p>
             <div class="origin-selector">
               <button type="button" class="origin-btn" data-origin="milano">Milano</button>
@@ -211,7 +211,7 @@
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2" stroke-linecap="round"/></svg>
           <h3>Orari</h3>
           <p class="short">Tutti gli orari della giornata</p>
-          <div class="detail-more">Cerimonia ore 17:00 · Aperitivo 18:30 · Cena 20:30 · Party dalle 00:00. Vi aspettiamo con un po' di anticipo.</div>
+          <div class="detail-more">Cerimonia ore 17:00 · Aperitivo 18:30 · Cena 20:30 · Party dalle 00:00. Vi aspettiamo con un po' di anticipo per la Cerimonia delle ore 16:30. A seguire vi aspettiamo con gli orari sopra specificati presso il Palazzo dei Principi Lanza.</div>
         </button>
         <button class="detail-card" data-reveal style="--i:4">
           <span class="plus">+</span>
@@ -219,13 +219,6 @@
           <h3>Alloggio</h3>
           <p class="short">Struttura residenziale a Praia a Mare</p>
           <div class="detail-more">Abbiamo selezionato per voi una struttura residenziale sita in Praia a Mare. Seguiranno indicazioni specifiche per ciascuno di voi.</div>
-        </button>
-        <button class="detail-card" data-reveal style="--i:5">
-          <span class="plus">+</span>
-          <svg viewBox="0 0 24 24"><path d="M4 16V9l2-4h12l2 4v7" stroke-linejoin="round"/><circle cx="7.5" cy="16.5" r="1.6"/><circle cx="16.5" cy="16.5" r="1.6"/></svg>
-          <h3>Transfer</h3>
-          <p class="short">Servizio navetta disponibile</p>
-          <div class="detail-more">Navetta gratuita da/per gli hotel convenzionati, con partenze programmate prima della cerimonia e a fine serata.</div>
         </button>
       </div>
     </div>
@@ -307,6 +300,17 @@
         <p>La vostra conferma è stata registrata. Non vediamo l'ora di festeggiare insieme.</p>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- DETAIL FULL-PAGE VIEW -->
+<div class="detail-full" id="detailFull">
+  <button class="detail-full-close" id="detailFullClose" aria-label="Chiudi">&times;</button>
+  <div class="detail-full-inner">
+    <div class="detail-full-icon" id="detailFullIcon"></div>
+    <h2 id="detailFullTitle"></h2>
+    <div class="divider"></div>
+    <div class="detail-full-text" id="detailFullText"></div>
   </div>
 </div>
 
