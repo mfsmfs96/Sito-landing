@@ -73,6 +73,12 @@ Due dettagli che tengono in piedi le sessioni lunghe:
 
 ## Provarlo in locale
 
+Basta aprire `dj/index.html` con un doppio clic: non ci sono moduli ES né chiamate di rete,
+quindi funziona anche da `file://`. Se il browser blocca i Web Worker su file locali, il
+clock passa da solo a un timer interno e la musica va avanti lo stesso.
+
+Con un server statico è comunque tutto più pulito (e si prova anche il manifest):
+
 ```bash
 cd dj && python3 -m http.server 8899
 # poi apri http://127.0.0.1:8899/

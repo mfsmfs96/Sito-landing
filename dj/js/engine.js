@@ -664,17 +664,27 @@ window.DJ = window.DJ || {};
     },
 
     _spawnTicker() {
-      const tick = () => this._tick();
+      const tick = () => { this._gotTick = true; this._tick(); };
+      const useLocalTimer = () => {
+        if (this._timer) return;
+        if (this.worker) { try { this.worker.terminate(); } catch (e) {} this.worker = null; }
+        this._timer = setInterval(tick, 25);
+      };
+
+      this._gotTick = false;
       try {
         const src = "let id=null;onmessage=function(e){if(e.data.cmd==='start'){clearInterval(id);id=setInterval(function(){postMessage(0)},e.data.ms)}else if(e.data.cmd==='stop'){clearInterval(id);id=null}}";
         const url = URL.createObjectURL(new Blob([src], { type: 'application/javascript' }));
         this.worker = new Worker(url);
         this.worker.onmessage = tick;
+        this.worker.onerror = useLocalTimer;
         this.worker.postMessage({ cmd: 'start', ms: 25 });
       } catch (e) {
-        // fallback: timer sul thread principale
-        this._timer = setInterval(tick, 25);
+        useLocalTimer();     // worker vietato (per esempio aprendo il file da disco)
+        return;
       }
+      // il worker può anche fallire in silenzio: se entro 400 ms non batte, si passa al timer locale
+      setTimeout(() => { if (!this._gotTick) useLocalTimer(); }, 400);
     },
 
     _tick() {
