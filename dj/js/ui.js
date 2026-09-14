@@ -319,13 +319,9 @@
       recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
       recorder.onstop = () => {
         const blob = new Blob(chunks, { type: chunks[0] ? chunks[0].type : 'audio/webm' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'aura-set-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.webm';
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+        const name = 'aura-set-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.webm';
         $('#recBtn').classList.remove('rec');
-        D.log('Registrazione salvata.', 'cmd');
+        saveRecording(blob, name);
       };
       recorder.start(4000);
       $('#recBtn').classList.add('rec');
@@ -334,6 +330,36 @@
       D.log('Registrazione non supportata dal browser.', 'warn');
     }
   });
+
+  /** Salvataggio del set: nell'anteprima passa dal permesso del visualizzatore,
+      altrove è un normale link di download. */
+  function saveRecording(blob, filename) {
+    const host = (window.claude && typeof window.claude.use === 'function')
+      ? window.claude.use('downloads').catch(() => null)
+      : Promise.resolve(null);
+
+    host.then(dl => {
+      if (dl) {
+        dl.save({ filename, data: blob }).then(
+          () => D.log('Registrazione salvata.', 'cmd'),
+          err => D.log(err && err.code === 'declined'
+            ? 'Salvataggio annullato.'
+            : 'Non sono riuscito a salvare il file (' + ((err && err.code) || 'errore') + ').', 'warn')
+        );
+        return;
+      }
+      if (window.claude) {
+        D.log('Qui il salvataggio è bloccato: apri il set dal sito per scaricarlo.', 'warn');
+        return;
+      }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      D.log('Registrazione salvata.', 'cmd');
+    });
+  }
 
   /* ================= WAKE LOCK ================= */
   let wakeLock = null;
