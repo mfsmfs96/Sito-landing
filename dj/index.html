@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AURA — DJ virtuale autonomo</title>
+<meta name="description" content="Un DJ virtuale che compone, suona e mixa musica in base ai tuoi gusti, autonomamente per ore.">
+<meta name="theme-color" content="#08080c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2308080c'/%3E%3Ccircle cx='50' cy='50' r='26' fill='none' stroke='%237c5cff' stroke-width='6'/%3E%3Ccircle cx='50' cy='50' r='6' fill='%2300e0c6'/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ BOOT / SETUP ============ -->
+<div id="boot" class="boot">
+  <div class="boot-card">
+    <div class="boot-logo"><span class="ring"></span>AURA</div>
+    <h1>Il tuo DJ virtuale</h1>
+    <p class="boot-sub">Compone, suona e mixa musica originale in base ai tuoi gusti. Poi va avanti da solo, per ore.</p>
+
+    <div class="boot-block">
+      <label class="lbl">Che cosa ti va di sentire?</label>
+      <div id="bootGenres" class="chips"></div>
+      <p class="hint">Scegline quanti vuoi. Il DJ imparerà il resto dai tuoi 👍 / 👎.</p>
+    </div>
+
+    <div class="boot-row">
+      <div class="boot-block">
+        <label class="lbl" for="bootDuration">Durata del set</label>
+        <select id="bootDuration">
+          <option value="60">1 ora</option>
+          <option value="120">2 ore</option>
+          <option value="240" selected>4 ore</option>
+          <option value="480">8 ore</option>
+          <option value="0">Infinito</option>
+        </select>
+      </div>
+      <div class="boot-block">
+        <label class="lbl" for="bootVibe">Partenza</label>
+        <select id="bootVibe">
+          <option value="warmup" selected>Warm‑up → peak time</option>
+          <option value="peak">Subito in pista</option>
+          <option value="chill">Solo chill</option>
+          <option value="afterhours">Afterhours</option>
+        </select>
+      </div>
+    </div>
+
+    <button id="bootStart" class="btn-primary">▶ Avvia il set</button>
+    <p class="hint center">Serve un tocco per attivare l'audio del browser. Da lì in poi non devi fare più nulla.</p>
+  </div>
+</div>
+
+<!-- ============ TOP BAR ============ -->
+<header class="topbar">
+  <div class="brand"><span class="ring"></span>AURA<i>dj</i></div>
+  <div class="top-meta">
+    <span class="badge" id="autoBadge" title="Il DJ decide tutto da solo">AUTOPILOT</span>
+    <span class="chip-stat" id="clock">00:00:00</span>
+    <span class="chip-stat" id="bpmStat">— BPM</span>
+    <span class="chip-stat" id="keyStat">—</span>
+  </div>
+  <div class="top-actions">
+    <button id="wakeBtn" class="icon-btn" title="Tieni lo schermo acceso">☀</button>
+    <button id="recBtn" class="icon-btn" title="Registra il set">●</button>
+    <button id="panelBtn" class="icon-btn only-mobile" title="Pannelli">☰</button>
+  </div>
+  <div class="setbar"><i id="setProgress"></i></div>
+</header>
+
+<main class="layout">
+
+  <!-- ============ STAGE ============ -->
+  <section class="stage">
+    <canvas id="viz" class="viz"></canvas>
+
+    <div class="now">
+      <div class="now-label" id="nowLabel">In riproduzione</div>
+      <h2 class="now-title" id="nowTitle">—</h2>
+      <div class="now-meta" id="nowMeta">In attesa di partire…</div>
+      <div class="now-progress"><i id="nowBar"></i></div>
+      <div class="now-section" id="nowSection"></div>
+    </div>
+
+    <div class="decks">
+      <article class="deck" id="deckA">
+        <header><span class="deck-id">A</span><span class="deck-state" id="dA-state">libero</span></header>
+        <h3 id="dA-title">—</h3>
+        <p id="dA-meta">—</p>
+        <div class="deck-bar"><i id="dA-bar"></i></div>
+        <div class="deck-vu"><i id="dA-vu"></i></div>
+      </article>
+
+      <div class="xfader-wrap">
+        <div class="xfader-labels"><span>A</span><span id="xfaderMode">auto</span><span>B</span></div>
+        <input type="range" id="xfader" min="0" max="1" step="0.001" value="0" aria-label="Crossfader">
+      </div>
+
+      <article class="deck" id="deckB">
+        <header><span class="deck-id">B</span><span class="deck-state" id="dB-state">libero</span></header>
+        <h3 id="dB-title">—</h3>
+        <p id="dB-meta">—</p>
+        <div class="deck-bar"><i id="dB-bar"></i></div>
+        <div class="deck-vu"><i id="dB-vu"></i></div>
+      </article>
+    </div>
+
+    <div class="next" id="nextBox">
+      <span class="next-lbl">Prossima</span>
+      <span class="next-title" id="nextTitle">il DJ ci sta pensando…</span>
+      <span class="next-count" id="nextCount"></span>
+    </div>
+
+    <div class="transport">
+      <button id="btnDislike" class="t-btn" title="Non mi piace: cambia e impara">👎</button>
+      <button id="btnPrevEnergy" class="t-btn" title="Abbassa l'energia">−</button>
+      <button id="btnPlay" class="t-btn big" title="Play / Pausa">⏸</button>
+      <button id="btnNextEnergy" class="t-btn" title="Alza l'energia">+</button>
+      <button id="btnLike" class="t-btn" title="Mi piace: fanne ancora così">❤</button>
+      <button id="btnSkip" class="t-btn wide" title="Passa alla prossima">SKIP ⏭</button>
+    </div>
+
+    <div class="energy-row">
+      <label for="energy">Energia</label>
+      <input type="range" id="energy" min="0" max="100" value="45">
+      <output id="energyVal">45</output>
+      <button id="btnAuto" class="pill on" title="Lascia decidere l'energia al DJ">auto</button>
+    </div>
+  </section>
+
+  <!-- ============ RACK ============ -->
+  <aside class="rack" id="rack">
+    <nav class="rack-tabs">
+      <button class="rt active" data-panel="gusti">Gusti</button>
+      <button class="rt" data-panel="libreria">Libreria</button>
+      <button class="rt" data-panel="mixer">Mixer</button>
+      <button class="rt" data-panel="booth">Booth</button>
+    </nav>
+
+    <div class="panel active" id="panel-gusti">
+      <h4>Generi</h4>
+      <p class="hint">Trascina per dire quanto ti va. Le barre si muovono da sole quando metti 👍 o 👎.</p>
+      <div id="genreList" class="genre-list"></div>
+
+      <h4>Confini del set</h4>
+      <div class="field"><label>BPM <span id="bpmRangeVal" class="val">112–132</span></label>
+        <div class="dual"><input type="range" id="bpmMin" min="60" max="180" value="112"><input type="range" id="bpmMax" min="60" max="180" value="132"></div>
+      </div>
+      <div class="field"><label>Luminosità <span id="brightVal" class="val">50</span></label>
+        <input type="range" id="bright" min="0" max="100" value="50"></div>
+      <div class="field"><label>Densità ritmica <span id="densVal" class="val">50</span></label>
+        <input type="range" id="dens" min="0" max="100" value="50"></div>
+      <div class="field"><label>Lunghezza brani <span id="lenVal" class="val">media</span></label>
+        <input type="range" id="trackLen" min="0" max="100" value="50"></div>
+
+      <h4>Memoria</h4>
+      <div class="learned" id="learned"></div>
+      <button id="resetTaste" class="btn-ghost">Dimentica i miei gusti</button>
+    </div>
+
+    <div class="panel" id="panel-libreria">
+      <h4>I tuoi brani</h4>
+      <p class="hint">Trascina qui i tuoi file audio (mp3, wav, m4a, flac, ogg). Restano sul tuo computer: nulla viene caricato online.</p>
+      <div id="drop" class="drop">
+        <strong>Trascina i file qui</strong>
+        <span>oppure</span>
+        <button id="pickFiles" class="btn-ghost">Scegli dal disco</button>
+        <input type="file" id="fileInput" accept="audio/*" multiple hidden>
+      </div>
+      <label class="switch"><input type="checkbox" id="useLibrary" checked><span>Mixa i miei brani nel set</span></label>
+      <div class="field"><label>Ogni quanto <span id="mixRateVal" class="val">1 su 3</span></label>
+        <input type="range" id="mixRate" min="0" max="100" value="33"></div>
+      <div id="trackList" class="track-list"></div>
+    </div>
+
+    <div class="panel" id="panel-mixer">
+      <h4>Master</h4>
+      <div class="field"><label>Volume <span id="volVal" class="val">80</span></label>
+        <input type="range" id="masterVol" min="0" max="100" value="80"></div>
+      <div class="field"><label>Riverbero <span id="revVal" class="val">30</span></label>
+        <input type="range" id="revAmt" min="0" max="100" value="30"></div>
+      <div class="field"><label>Sub / bassi <span id="bassVal" class="val">0</span></label>
+        <input type="range" id="bassTilt" min="-60" max="60" value="0"></div>
+      <div class="field"><label>Aria / alti <span id="airVal" class="val">0</span></label>
+        <input type="range" id="airTilt" min="-60" max="60" value="0"></div>
+      <h4>Transizioni</h4>
+      <div class="field"><label>Durata mix <span id="mixLenVal" class="val">32 battute</span></label>
+        <input type="range" id="mixLen" min="8" max="64" step="8" value="32"></div>
+      <label class="switch"><input type="checkbox" id="fxAllowed" checked><span>Effetti in transizione (filtri, echo, riser)</span></label>
+      <button id="btnMixNow" class="btn-ghost">Mixa adesso</button>
+      <h4>Visuale</h4>
+      <label class="switch"><input type="checkbox" id="vizOn" checked><span>Visualizer</span></label>
+    </div>
+
+    <div class="panel" id="panel-booth">
+      <h4>Cabina regia</h4>
+      <p class="hint">Quello che il DJ sta decidendo, in tempo reale.</p>
+      <div id="log" class="log"></div>
+    </div>
+  </aside>
+</main>
+
+<script src="js/engine.js"></script>
+<script src="js/composer.js"></script>
+<script src="js/deck.js"></script>
+<script src="js/taste.js"></script>
+<script src="js/analysis.js"></script>
+<script src="js/director.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
