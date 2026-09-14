@@ -16,6 +16,11 @@ di questo repository, raggiungibile su `/dj/`.
   set insieme ai brani generati, adattando il tempo della serata al brano. I file restano sul tuo computer.
 - **Impara i tuoi gusti**: gli slider dei generi sono il punto di partenza, poi ❤ e 👎 spostano i pesi delle
   caratteristiche di ciò che stava suonando (genere, tempo, luminosità, densità, scala). Tutto in `localStorage`.
+- **Ha una voce, in due sensi diversi.** Dentro i brani ci sono cori e stab vocali sintetizzati a
+  formanti — filtri accordati sulle risonanze delle vocali, con vibrato e passaggio graduale da una
+  vocale all'altra: passano dal mixer, quindi prendono riverbero, filtri e transizioni e finiscono nella
+  registrazione. Sopra la musica, opzionale, uno speaker che annuncia i brani con la voce di sistema del
+  browser e abbassa la musica mentre parla, come in radio.
 - **Conduce la serata da solo**: un arco energetico decide come evolve il set — warm‑up, salita, peak time,
   discesa — e da lì derivano tempo, generi, densità e tipo di transizione. Con durata "infinito" il ciclo si
   ripete ogni 90 minuti.
@@ -35,6 +40,7 @@ di questo repository, raggiungibile su `/dj/`.
 | `auto` | ridà l'energia in mano al DJ |
 | Spazio | pausa e ripresa (sospende davvero l'audio, riprende dallo stesso punto) |
 | ● | registra il set e lo salva come file audio |
+| pannello Voce | quanta voce nei brani, e lo speaker con voce, frequenza, volume e quanto scende la musica sotto |
 | ☀ | tiene lo schermo acceso (Wake Lock, dove supportato) |
 
 ## Com'è fatto
@@ -50,6 +56,7 @@ dj/
     ├── taste.js      profilo di gusto dichiarato + appreso, scelta morbida dei candidati
     ├── analysis.js   decodifica dei file, stima BPM e primo battere
     ├── director.js   regia autonoma: arco energetico, scelta, transizioni
+    ├── speaker.js    lo speaker: voce di sistema, annunci, abbassamento della musica
     └── ui.js         interfaccia, visualizer, libreria, registrazione
 ```
 
@@ -63,7 +70,12 @@ Due dettagli che tengono in piedi le sessioni lunghe:
 
 ## Limiti onesti
 
-- La musica è strumentale ed elettronica: niente voci, niente strumenti acustici campionati.
+- La musica è elettronica e senza strumenti acustici campionati. La voce nei brani è timbro di voce,
+  non un cantante: canta vocali, non parole. Una vera voce che canta un testo richiederebbe un modello
+  neurale da scaricare o un servizio a pagamento, e non rientra in un'app statica a costo zero.
+- Lo speaker dipende dalle voci installate sul dispositivo: senza voci italiane leggerà con accento
+  straniero, e senza nessuna voce resta muto (l'app lo dice invece di fingere). Quell'audio esce fuori
+  dal mixer, quindi non prende effetti e non entra nella registrazione del set.
 - La stima del BPM sui tuoi file funziona bene su materiale a tempo costante; su brani suonati dal vivo o con
   rubato può sbagliare (l'app segnala "tempo incerto"). Il tempo dei tuoi brani viene adattato cambiando la
   velocità di riproduzione, quindi variazioni oltre ~10% alterano l'intonazione: per questo è il set ad

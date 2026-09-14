@@ -265,6 +265,49 @@
       });
     }
 
+    /* --- voce: cori tenuti e stab vocali --- */
+    if (P.voiceOn && L.voice) {
+      // porta l'accordo nel registro comodo per una voce
+      const sung = notes.map(n => {
+        let v = n;
+        while (v < 59) v += 12;
+        while (v > 79) v -= 12;
+        return v;
+      }).sort((x, y) => x - y);
+
+      const wantPad = P.voiceStyle === 'pad' || P.voiceStyle === 'both';
+      const wantChop = P.voiceStyle === 'chop' || P.voiceStyle === 'both';
+
+      if (wantPad && step === 0 && bar % barsPerChord === 0 && on(L.voice * 0.95)) {
+        const voices = sung.slice(0, sec.type === 'break' ? 3 : 2);
+        voices.forEach((n, i) => {
+          V.voice(ch, time + i * 0.012, {          // attacchi non perfettamente allineati
+            note: n,
+            len: barsPerChord * 4 * beat * 0.88,
+            vowel: P.vowel,
+            vowel2: P.vowel2,
+            vel: (0.26 + t.brightness * 0.12) * (sec.type === 'break' ? 1.3 : 1) * intens,
+            pad: true,
+            breath: 0.05
+          });
+        });
+      }
+
+      if (wantChop) {
+        const chopSteps = t.genre === 'dnb' ? [0, 8] : [4, 12];
+        if (chopSteps.indexOf(step) >= 0 && Math.random() < L.voice * (0.45 + t.density * 0.4)) {
+          V.voice(ch, time + hum(), {
+            note: sung[sung.length - 1] + (Math.random() < 0.25 ? 12 : 0),
+            len: stepDur * (1 + Math.random()),
+            vowel: Math.random() < 0.5 ? P.vowel : 'a',
+            vel: 0.3 * intens,
+            pad: false,
+            breath: 0.08
+          });
+        }
+      }
+    }
+
     /* --- lead --- */
     if (P.leadOn && on(L.lead) && step === 0 && bar % 2 === 0) {
       const n = C.scaleNote(t.scale, t.root, deg + (Math.random() < 0.5 ? 4 : 2), LEAD_OCT);

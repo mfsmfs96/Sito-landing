@@ -142,8 +142,8 @@ select{background:var(--panel2);color:var(--txt);border:1px solid var(--line);bo
 
 /* ---------------- RACK ---------------- */
 .rack{border-left:1px solid var(--line);background:rgba(10,10,16,.55);display:flex;flex-direction:column;min-height:0}
-.rack-tabs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
-.rt{background:none;border:0;padding:13px 4px;font-size:11.5px;letter-spacing:.08em;color:var(--mut);border-bottom:2px solid transparent;transition:.16s}
+.rack-tabs{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--line)}
+.rt{background:none;border:0;padding:13px 2px;font-size:11px;letter-spacing:.04em;color:var(--mut);border-bottom:2px solid transparent;transition:.16s}
 .rt:hover{color:var(--txt)}
 .rt.active{color:var(--txt);border-bottom-color:var(--acc)}
 .panel{display:none;padding:16px;overflow-y:auto;flex:1;min-height:0}

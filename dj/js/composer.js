@@ -73,84 +73,84 @@
       kick: 'four', clapOn: [4, 12], hats: 'offbeat', ohatOff: true, percAmt: 0.45,
       bassStyle: 'offbeat', bassWave: 'sawtooth', cutoff: [420, 1500], sub: 0.7,
       chordStyle: 'stab', chordSize: 4, prog: 'warm', scales: ['minor', 'dorian', 'major'],
-      arp: 0.25, lead: 0.15, pad: 0.35, swing: 0.08, texture: null
+      arp: 0.25, lead: 0.15, pad: 0.35, voice: 0.55, swing: 0.08, texture: null
     },
     deep: {
       name: 'Deep House', color: '#5ad2a0', bpm: [118, 124], energy: [0.25, 0.65],
       kick: 'four', clapOn: [4, 12], hats: 'offbeat', ohatOff: true, percAmt: 0.5,
       bassStyle: 'offbeat', bassWave: 'sawtooth', cutoff: [300, 900], sub: 0.9,
       chordStyle: 'pad', chordSize: 5, prog: 'warm', scales: ['dorian', 'minor'],
-      arp: 0.2, lead: 0.1, pad: 0.7, swing: 0.12, texture: { freq: 2600, vel: 0.02 }
+      arp: 0.2, lead: 0.1, pad: 0.7, voice: 0.6, swing: 0.12, texture: { freq: 2600, vel: 0.02 }
     },
     techno: {
       name: 'Techno', color: '#8f8fff', bpm: [130, 140], energy: [0.5, 1],
       kick: 'four', clapOn: [12], hats: 'sixteen', ohatOff: true, percAmt: 0.6,
       bassStyle: 'rolling', bassWave: 'square', cutoff: [280, 1100], sub: 0.6,
       chordStyle: 'stab', chordSize: 3, prog: 'dark', scales: ['minor', 'phrygian'],
-      arp: 0.3, lead: 0.1, pad: 0.25, swing: 0, texture: null
+      arp: 0.3, lead: 0.1, pad: 0.25, voice: 0.25, swing: 0, texture: null
     },
     melodic: {
       name: 'Melodic Techno', color: '#6ec8ff', bpm: [120, 126], energy: [0.4, 0.9],
       kick: 'four', clapOn: [12], hats: 'offbeat', ohatOff: true, percAmt: 0.4,
       bassStyle: 'rolling', bassWave: 'sawtooth', cutoff: [320, 1200], sub: 0.8,
       chordStyle: 'pad', chordSize: 4, prog: 'dark', scales: ['minor', 'harmonicMinor', 'dorian'],
-      arp: 0.75, lead: 0.4, pad: 0.8, swing: 0, texture: null
+      arp: 0.75, lead: 0.4, pad: 0.8, voice: 0.5, swing: 0, texture: null
     },
     afro: {
       name: 'Afro House', color: '#ffb05c', bpm: [118, 124], energy: [0.4, 0.85],
       kick: 'fourSync', clapOn: [12], hats: 'tribal', ohatOff: true, percAmt: 1,
       bassStyle: 'offbeat', bassWave: 'sawtooth', cutoff: [380, 1200], sub: 0.8,
       chordStyle: 'stab', chordSize: 4, prog: 'warm', scales: ['dorian', 'minor', 'mixolydian'],
-      arp: 0.4, lead: 0.25, pad: 0.4, swing: 0.14, texture: null
+      arp: 0.4, lead: 0.25, pad: 0.4, voice: 0.6, swing: 0.14, texture: null
     },
     disco: {
       name: 'Disco / Funk', color: '#ff6fae', bpm: [112, 120], energy: [0.4, 0.85],
       kick: 'four', clapOn: [4, 12], hats: 'sixteen', ohatOff: true, percAmt: 0.55,
       bassStyle: 'funk', bassWave: 'sawtooth', cutoff: [500, 1800], sub: 0.5,
       chordStyle: 'pluck', chordSize: 4, prog: 'bright', scales: ['major', 'mixolydian', 'dorian'],
-      arp: 0.45, lead: 0.3, pad: 0.25, swing: 0.16, texture: null
+      arp: 0.45, lead: 0.3, pad: 0.25, voice: 0.65, swing: 0.16, texture: null
     },
     nudisco: {
       name: 'Nu Disco', color: '#ffd166', bpm: [116, 122], energy: [0.4, 0.8],
       kick: 'four', clapOn: [4, 12], hats: 'offbeat', ohatOff: true, percAmt: 0.4,
       bassStyle: 'funk', bassWave: 'sawtooth', cutoff: [520, 1600], sub: 0.6,
       chordStyle: 'pluck', chordSize: 4, prog: 'bright', scales: ['major', 'mixolydian'],
-      arp: 0.5, lead: 0.35, pad: 0.4, swing: 0.1, texture: null
+      arp: 0.5, lead: 0.35, pad: 0.4, voice: 0.6, swing: 0.1, texture: null
     },
     synthwave: {
       name: 'Synthwave', color: '#ff5fd2', bpm: [98, 110], energy: [0.3, 0.7],
       kick: 'rock', clapOn: [4, 12], hats: 'eight', ohatOff: false, percAmt: 0.25,
       bassStyle: 'arpBass', bassWave: 'square', cutoff: [420, 1400], sub: 0.6,
       chordStyle: 'pad', chordSize: 4, prog: 'dark', scales: ['minor', 'harmonicMinor'],
-      arp: 0.6, lead: 0.6, pad: 0.8, swing: 0, texture: null
+      arp: 0.6, lead: 0.6, pad: 0.8, voice: 0.4, swing: 0, texture: null
     },
     lofi: {
       name: 'Lo‑fi', color: '#c0a68c', bpm: [76, 90], energy: [0.1, 0.4],
       kick: 'boombap', clapOn: [8], hats: 'swung', ohatOff: false, percAmt: 0.3,
       bassStyle: 'walk', bassWave: 'triangle', cutoff: [260, 700], sub: 0.9,
       chordStyle: 'pluck', chordSize: 5, prog: 'warm', scales: ['dorian', 'minor', 'major'],
-      arp: 0.2, lead: 0.2, pad: 0.5, swing: 0.28, texture: { freq: 4200, vel: 0.05, q: 0.4 }
+      arp: 0.2, lead: 0.2, pad: 0.5, voice: 0.45, swing: 0.28, texture: { freq: 4200, vel: 0.05, q: 0.4 }
     },
     dnb: {
       name: 'Drum & Bass', color: '#67ffa8', bpm: [170, 176], energy: [0.6, 1],
       kick: 'break', clapOn: [10], hats: 'sixteen', ohatOff: true, percAmt: 0.5,
       bassStyle: 'reese', bassWave: 'sawtooth', cutoff: [220, 900], sub: 1,
       chordStyle: 'stab', chordSize: 4, prog: 'dark', scales: ['minor', 'phrygian'],
-      arp: 0.3, lead: 0.2, pad: 0.4, swing: 0, texture: null
+      arp: 0.3, lead: 0.2, pad: 0.4, voice: 0.3, swing: 0, texture: null
     },
     trance: {
       name: 'Trance', color: '#7c5cff', bpm: [134, 140], energy: [0.6, 1],
       kick: 'four', clapOn: [4, 12], hats: 'offbeat', ohatOff: true, percAmt: 0.35,
       bassStyle: 'rolling', bassWave: 'sawtooth', cutoff: [300, 1000], sub: 0.7,
       chordStyle: 'pad', chordSize: 4, prog: 'bright', scales: ['minor', 'major'],
-      arp: 0.9, lead: 0.7, pad: 0.9, swing: 0, texture: null
+      arp: 0.9, lead: 0.7, pad: 0.9, voice: 0.6, swing: 0, texture: null
     },
     ambient: {
       name: 'Ambient', color: '#9fb4c7', bpm: [66, 84], energy: [0, 0.3],
       kick: 'none', clapOn: [], hats: 'none', ohatOff: false, percAmt: 0.1,
       bassStyle: 'drone', bassWave: 'triangle', cutoff: [200, 600], sub: 1,
       chordStyle: 'pad', chordSize: 5, prog: 'static', scales: ['lydian', 'dorian', 'major', 'minor'],
-      arp: 0.25, lead: 0.2, pad: 1, swing: 0, texture: { freq: 1800, vel: 0.03, q: 0.3 }
+      arp: 0.25, lead: 0.2, pad: 1, voice: 0.75, swing: 0, texture: { freq: 1800, vel: 0.03, q: 0.3 }
     }
   };
   const GENRE_KEYS = Object.keys(GENRES);
@@ -288,12 +288,12 @@
 
   /* strati attivi per tipo di sezione */
   const LAYERS = {
-    intro: { kick: 0.6, hat: 1, perc: 0.7, bass: 0.35, chord: 0.5, pad: 1, arp: 0.3, lead: 0, snare: 0.3 },
-    build: { kick: 1, hat: 1, perc: 1, bass: 0.8, chord: 0.7, pad: 1, arp: 0.9, lead: 0.3, snare: 0.8 },
-    drop:  { kick: 1, hat: 1, perc: 1, bass: 1, chord: 1, pad: 0.7, arp: 1, lead: 1, snare: 1 },
-    main:  { kick: 1, hat: 1, perc: 1, bass: 1, chord: 0.9, pad: 0.6, arp: 0.7, lead: 0.5, snare: 1 },
-    break: { kick: 0, hat: 0.4, perc: 0.6, bass: 0.2, chord: 1, pad: 1, arp: 0.8, lead: 0.7, snare: 0.2 },
-    outro: { kick: 1, hat: 0.9, perc: 0.8, bass: 0.5, chord: 0.3, pad: 0.6, arp: 0.2, lead: 0, snare: 0.6 }
+    intro: { kick: 0.6, hat: 1, perc: 0.7, bass: 0.35, chord: 0.5, pad: 1, arp: 0.3, lead: 0, snare: 0.3, voice: 0.5 },
+    build: { kick: 1, hat: 1, perc: 1, bass: 0.8, chord: 0.7, pad: 1, arp: 0.9, lead: 0.3, snare: 0.8, voice: 0.4 },
+    drop:  { kick: 1, hat: 1, perc: 1, bass: 1, chord: 1, pad: 0.7, arp: 1, lead: 1, snare: 1, voice: 0.9 },
+    main:  { kick: 1, hat: 1, perc: 1, bass: 1, chord: 0.9, pad: 0.6, arp: 0.7, lead: 0.5, snare: 1, voice: 0.7 },
+    break: { kick: 0, hat: 0.4, perc: 0.6, bass: 0.2, chord: 1, pad: 1, arp: 0.8, lead: 0.7, snare: 0.2, voice: 1 },
+    outro: { kick: 1, hat: 0.9, perc: 0.8, bass: 0.5, chord: 0.3, pad: 0.6, arp: 0.2, lead: 0, snare: 0.6, voice: 0.3 }
   };
 
   /* ---------- titoli ---------- */
@@ -323,6 +323,7 @@
     const brightness = clamp(opt.brightness != null ? opt.brightness : 0.5, 0, 1);
     const density = clamp(opt.density != null ? opt.density : 0.5, 0, 1);
     const lengthPref = clamp(opt.lengthPref != null ? opt.lengthPref : 0.5, 0, 1);
+    const voicePref = clamp(opt.voice != null ? opt.voice : 0.5, 0, 1);
 
     const bpm = Math.round(opt.bpm != null
       ? clamp(opt.bpm, G.bpm[0] - 4, G.bpm[1] + 4)
@@ -375,7 +376,11 @@
         leadOn: chance(r, G.lead * (0.4 + gE)),
         padOn: chance(r, G.pad * 1.1),
         arpRate: pick(r, [2, 2, 1, 4]),
-        arpShape: pick(r, ['up', 'updown', 'random', 'octave'])
+        arpShape: pick(r, ['up', 'updown', 'random', 'octave']),
+        voiceOn: chance(r, (G.voice != null ? G.voice : 0.4) * voicePref * 1.35),
+        voiceStyle: pick(r, ['pad', 'chop', 'both', 'pad']),
+        vowel: pick(r, ['a', 'o', 'u', 'e']),
+        vowel2: chance(r, 0.65) ? pick(r, ['a', 'o', 'u', 'i', 'e']) : null
       }
     };
 

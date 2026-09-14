@@ -144,6 +144,7 @@
         brightness: clamp(p.brightness + (Math.random() * 0.3 - 0.15), 0, 1),
         density: clamp(p.density + (Math.random() * 0.3 - 0.15), 0, 1),
         lengthPref: p.lengthPref,
+        voice: p.voice,
         root: key ? key.root : undefined,
         scale: key ? key.scale : undefined
       });

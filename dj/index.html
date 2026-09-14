@@ -134,6 +134,7 @@
     <nav class="rack-tabs">
       <button class="rt active" data-panel="gusti">Gusti</button>
       <button class="rt" data-panel="libreria">Libreria</button>
+      <button class="rt" data-panel="voce">Voce</button>
       <button class="rt" data-panel="mixer">Mixer</button>
       <button class="rt" data-panel="booth">Booth</button>
     </nav>
@@ -174,6 +175,29 @@
       <div id="trackList" class="track-list"></div>
     </div>
 
+    <div class="panel" id="panel-voce">
+      <h4>Voce nei brani</h4>
+      <p class="hint">Cori e stab vocali sintetizzati dentro la musica: passano dal mixer, quindi prendono riverbero e filtri e finiscono anche nella registrazione.</p>
+      <div class="field"><label>Quanta voce <span id="voiceAmtVal" class="val">50</span></label>
+        <input type="range" id="voiceAmt" min="0" max="100" value="50"></div>
+
+      <h4>Speaker</h4>
+      <p class="hint" id="mcStatus">Cerco le voci del sistema…</p>
+      <label class="switch"><input type="checkbox" id="mcOn"><span>Annuncia i brani a voce</span></label>
+      <div class="field"><label for="mcVoice">Voce del sistema</label><select id="mcVoice"></select></div>
+      <div class="field"><label>Ogni quanto <span id="mcEveryVal" class="val">un brano su 2</span></label>
+        <input type="range" id="mcEvery" min="0" max="5" step="1" value="2"></div>
+      <div class="field"><label>Volume della voce <span id="mcVolVal" class="val">100</span></label>
+        <input type="range" id="mcVol" min="0" max="100" value="100"></div>
+      <div class="field"><label>Velocità <span id="mcRateVal" class="val">1.0×</span></label>
+        <input type="range" id="mcRate" min="70" max="130" value="100"></div>
+      <div class="field"><label>Musica sotto la voce <span id="mcDuckVal" class="val">32</span></label>
+        <input type="range" id="mcDuck" min="5" max="80" value="32"></div>
+      <label class="switch"><input type="checkbox" id="mcHype"><span>Ogni tanto una battuta sul drop</span></label>
+      <button id="mcTest" class="btn-ghost">Prova la voce</button>
+      <p class="hint">Lo speaker usa le voci installate sul tuo dispositivo, quindi la qualità dipende da quello. Questo audio non passa dal mixer: non entra nella registrazione del set.</p>
+    </div>
+
     <div class="panel" id="panel-mixer">
       <h4>Master</h4>
       <div class="field"><label>Volume <span id="volVal" class="val">80</span></label>
@@ -207,6 +231,7 @@
 <script src="js/taste.js"></script>
 <script src="js/analysis.js"></script>
 <script src="js/director.js"></script>
+<script src="js/speaker.js"></script>
 <script src="js/ui.js"></script>
 </body>
 </html>

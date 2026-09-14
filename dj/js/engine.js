@@ -592,6 +592,100 @@ window.DJ = window.DJ || {};
     n.connect(bp); bp.connect(ng); ng.connect(g);
   };
 
+  /* --- voce sintetica a formanti ---
+     Una sorgente ricca di armoniche passa in tre passa-banda accordati sulle
+     risonanze di una vocale: è così che si costruiscono i cori sintetici.
+     Il vibrato e il passaggio graduale da una vocale all'altra sono ciò che
+     distingue una voce da un filtro. */
+  const VOWELS = {
+    a: [[850, 1.00, 10], [1220, 0.50, 12], [2810, 0.22, 14]],
+    e: [[610, 1.00, 10], [1900, 0.45, 13], [2700, 0.20, 14]],
+    i: [[310, 1.00, 9],  [2790, 0.40, 14], [3310, 0.18, 15]],
+    o: [[480, 1.00, 9],  [760,  0.50, 10], [2620, 0.15, 14]],
+    u: [[370, 1.00, 9],  [950,  0.40, 11], [2670, 0.12, 14]]
+  };
+  V.VOWELS = VOWELS;
+
+  V.voice = function (ch, t, o) {
+    const ctx = Engine.ctx;
+    const pad = o.pad !== false;
+    const len = o.len || 1;
+    const vel = (o.vel != null ? o.vel : 0.3);
+    const f0 = mtof(o.note);
+    const v1 = VOWELS[o.vowel] || VOWELS.a;
+    const v2 = o.vowel2 ? (VOWELS[o.vowel2] || v1) : null;
+
+    const g = out(ch, {
+      rev: o.rev != null ? o.rev : (pad ? 0.6 : 0.35),
+      del: o.del != null ? o.del : (pad ? 0.08 : 0.3)
+    });
+
+    const eg = ctx.createGain();
+    const a = pad ? Math.min(len * 0.3, 0.55) : 0.02;
+    const r = pad ? 0.7 : 0.14;
+    ampEnv(eg.gain, t, vel * 0.5, a, pad ? 0.25 : 0.06, pad ? 0.9 : 0.4, len, r);
+    eg.connect(g);
+
+    // sorgente: due dente di sega leggermente disaccordati, come due gole vicine
+    const src = ctx.createGain();
+    src.gain.value = 0.5;
+    const oscs = [];
+    [-6, 7].forEach(cents => {
+      const osc = ctx.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(f0, t);
+      osc.detune.setValueAtTime(cents, t);
+      osc.connect(src);
+      oscs.push(osc);
+    });
+
+    // vibrato che entra dopo l'attacco, come in un canto tenuto
+    const lfo = ctx.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.setValueAtTime(4.8 + Math.random() * 1.2, t);
+    const lfoAmt = ctx.createGain();
+    lfoAmt.gain.setValueAtTime(0, t);
+    lfoAmt.gain.linearRampToValueAtTime(pad ? 11 : 5, t + Math.min(len * 0.6, 0.9));
+    lfo.connect(lfoAmt);
+    oscs.forEach(osc => lfoAmt.connect(osc.detune));
+
+    // un filo d'aria: è quello che toglie il sapore di sintetizzatore
+    if (o.breath !== 0) {
+      const n = noiseSrc(t, len + r);
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass'; bp.frequency.value = 2600; bp.Q.value = 0.9;
+      const ng = ctx.createGain();
+      ng.gain.value = (o.breath || 0.05);
+      n.connect(bp); bp.connect(ng); ng.connect(src);
+    }
+
+    // tre formanti in parallelo, con passaggio graduale alla seconda vocale
+    for (let i = 0; i < 3; i++) {
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.setValueAtTime(v1[i][0], t);
+      bp.Q.value = v1[i][2];
+      if (v2) {
+        bp.frequency.setValueAtTime(v1[i][0], t + len * 0.2);
+        bp.frequency.linearRampToValueAtTime(v2[i][0], t + len * 0.8);
+      }
+      const fg = ctx.createGain();
+      fg.gain.value = v1[i][1] * 0.9;
+      src.connect(bp); bp.connect(fg); fg.connect(eg);
+    }
+
+    // un filo di sorgente diretta tiene il corpo della nota
+    const dry = ctx.createGain();
+    dry.gain.value = 0.06;
+    const dryLp = ctx.createBiquadFilter();
+    dryLp.type = 'lowpass'; dryLp.frequency.value = 900;
+    src.connect(dryLp); dryLp.connect(dry); dry.connect(eg);
+
+    const stopAt = t + len + r + 0.15;
+    oscs.forEach(osc => { osc.start(t); osc.stop(stopAt); });
+    lfo.start(t); lfo.stop(stopAt);
+  };
+
   /** rumore continuo (vinile / aria) — ritorna un handle con stop() */
   V.texture = function (ch, t, o) {
     o = o || {};

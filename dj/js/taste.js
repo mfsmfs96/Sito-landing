@@ -21,6 +21,8 @@
     fx: true,
     useLibrary: true,
     mixRate: 0.33,
+    voice: 0.5,
+    mc: { on: false, every: 2, volume: 1, rate: 1, duck: 0.32, hype: false, voiceName: null },
     stats: { likes: 0, skips: 0, played: 0, minutes: 0 }
   });
 
@@ -36,6 +38,7 @@
           this.profile = Object.assign(d, p);
           this.profile.genres = Object.assign(d.genres, p.genres || {});
           this.profile.stats = Object.assign(d.stats, p.stats || {});
+          this.profile.mc = Object.assign(d.mc, p.mc || {});
           this.profile.learned = p.learned || {};
         }
       } catch (e) { /* profilo di default */ }

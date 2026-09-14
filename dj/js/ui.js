@@ -14,7 +14,7 @@
   };
 
   Taste.load();
-  let started = false, vizOn = true, beatPulse = 0, lastBar = -1;
+  let started = false, vizOn = true, beatPulse = 0, lastBar = -1, lastSection = null;
 
   /* ================= BOOT ================= */
   function buildBootChips() {
@@ -41,6 +41,7 @@
     started = true;
     Engine.init();
     Engine.resume();
+    Sp.prime();
     D.plan.vibe = $('#bootVibe').value;
     D.start({ durationMin: parseInt($('#bootDuration').value, 10), vibe: $('#bootVibe').value });
     applyMixer();   // i canali dei deck esistono solo dopo l'avvio
@@ -156,6 +157,114 @@
       D.log('Gusti azzerati: riparto da zero.', 'cmd');
     });
   }
+
+  /* ================= VOCE ================= */
+  const Sp = DJ.Speaker;
+
+  function initVoicePanel() {
+    // quanta voce nei brani generati
+    const amt = $('#voiceAmt');
+    amt.value = Math.round(Taste.profile.voice * 100);
+    $('#voiceAmtVal').textContent = amt.value;
+    amt.addEventListener('input', () => {
+      Taste.profile.voice = amt.value / 100;
+      $('#voiceAmtVal').textContent = amt.value;
+      Taste.save();
+    });
+
+    const mc = Taste.profile.mc;
+    const sel = $('#mcVoice');
+
+    if (!Sp.supported()) {
+      $('#mcStatus').textContent = 'Questo browser non ha la sintesi vocale: lo speaker non è disponibile.';
+      ['#mcOn', '#mcVoice', '#mcEvery', '#mcVol', '#mcRate', '#mcDuck', '#mcHype', '#mcTest']
+        .forEach(id => { $(id).disabled = true; });
+      return;
+    }
+
+    const fillVoices = voices => {
+      sel.innerHTML = '';
+      if (!voices.length) {
+        $('#mcStatus').textContent = 'Nessuna voce installata sul dispositivo: lo speaker resta muto.';
+        sel.innerHTML = '<option>nessuna voce disponibile</option>';
+        return;
+      }
+      voices.forEach(v => {
+        const o = document.createElement('option');
+        o.value = v.name;
+        o.textContent = v.name + ' · ' + v.lang;
+        sel.appendChild(o);
+      });
+      if (mc.voiceName) Sp.setVoice(mc.voiceName);
+      if (Sp.voice) sel.value = Sp.voice.name;
+      const italiane = voices.filter(v => v.lang && v.lang.toLowerCase().indexOf('it') === 0).length;
+      $('#mcStatus').textContent = italiane
+        ? italiane + ' voci italiane disponibili su questo dispositivo.'
+        : 'Nessuna voce italiana installata: leggerà con accento straniero.';
+    };
+
+    Sp.init(fillVoices);
+    fillVoices(Sp.voices);
+
+    sel.addEventListener('change', () => {
+      Sp.setVoice(sel.value);
+      mc.voiceName = sel.value;
+      Taste.save();
+    });
+
+    Sp.enabled = !!mc.on; $('#mcOn').checked = !!mc.on;
+    $('#mcOn').addEventListener('change', e => {
+      Sp.enabled = e.target.checked; mc.on = Sp.enabled; Taste.save();
+      D.log(Sp.enabled ? 'Speaker acceso.' : 'Speaker spento.', 'cmd');
+      if (!Sp.enabled) { try { speechSynthesis.cancel(); } catch (err) {} Sp.duck(false); }
+    });
+
+    const everyLabel = v => +v === 0 ? 'mai da solo' : (+v === 1 ? 'ogni brano' : 'un brano su ' + v);
+    Sp.every = mc.every; $('#mcEvery').value = mc.every; $('#mcEveryVal').textContent = everyLabel(mc.every);
+    $('#mcEvery').addEventListener('input', e => {
+      Sp.every = +e.target.value; mc.every = Sp.every;
+      $('#mcEveryVal').textContent = everyLabel(e.target.value); Taste.save();
+    });
+
+    Sp.volume = mc.volume; $('#mcVol').value = Math.round(mc.volume * 100); $('#mcVolVal').textContent = $('#mcVol').value;
+    $('#mcVol').addEventListener('input', e => {
+      Sp.volume = e.target.value / 100; mc.volume = Sp.volume;
+      $('#mcVolVal').textContent = e.target.value; Taste.save();
+    });
+
+    Sp.rate = mc.rate; $('#mcRate').value = Math.round(mc.rate * 100);
+    $('#mcRateVal').textContent = (mc.rate).toFixed(1) + '×';
+    $('#mcRate').addEventListener('input', e => {
+      Sp.rate = e.target.value / 100; mc.rate = Sp.rate;
+      $('#mcRateVal').textContent = Sp.rate.toFixed(1) + '×'; Taste.save();
+    });
+
+    Sp.duckTo = mc.duck; $('#mcDuck').value = Math.round(mc.duck * 100); $('#mcDuckVal').textContent = $('#mcDuck').value;
+    $('#mcDuck').addEventListener('input', e => {
+      Sp.duckTo = e.target.value / 100; mc.duck = Sp.duckTo;
+      $('#mcDuckVal').textContent = e.target.value; Taste.save();
+    });
+
+    Sp.hype = !!mc.hype; $('#mcHype').checked = Sp.hype;
+    $('#mcHype').addEventListener('change', e => { Sp.hype = e.target.checked; mc.hype = Sp.hype; Taste.save(); });
+
+    $('#mcTest').addEventListener('click', () => {
+      Sp.prime();
+      const t = D.currentTrack();
+      const ok = Sp.say(t ? Sp.phraseFor(t, false) : 'Sono il tuo DJ. Quando vuoi, si parte.', { interrupt: true });
+      if (!ok) D.log('La voce non ha risposto: controlla le voci installate sul dispositivo.', 'warn');
+    });
+  }
+
+  /* annunci: il DJ parla sopra l'inizio del mix, come alla radio */
+  D.on('transition', e => {
+    if (!Sp.enabled) return;
+    setTimeout(() => Sp.announce(e.track, false), 1200);
+  });
+  D.on('track', e => {
+    if (!Sp.enabled) return;
+    if (D.trackCount <= 1) setTimeout(() => Sp.announce(e.track, true), 600);
+  });
 
   /* ================= MIXER ================= */
   function applyMixer() {
@@ -505,6 +614,12 @@
       : '—';
     $('#nowBar').style.width = t ? (deck.progress() * 100).toFixed(2) + '%' : '0%';
     $('#nowSection').textContent = t && deck.section ? SECT[deck.section.type] || deck.section.type : '';
+    if (t && deck.section && deck.section.type !== lastSection) {
+      lastSection = deck.section.type;
+      if (Sp.enabled && Sp.hype && lastSection === 'drop' && D.targetEnergy() > 0.7 && Math.random() < 0.35) {
+        Sp.say(Sp.hypeLine(), { pitch: 1.05 });
+      }
+    }
     $('#nowLabel').textContent = D.transition ? 'Mix in corso' : 'In riproduzione';
     $('#nowTitle').style.color = color;
 
@@ -546,6 +661,7 @@
   /* ================= INIT ================= */
   buildBootChips();
   initTastePanel();
+  initVoicePanel();
   renderLibrary();
   syncEnergyUI();
   resize();
