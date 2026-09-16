@@ -1,0 +1,9 @@
+# JARVIS V0 — core (leggero, ~25 MB)
+fastapi==0.141.1
+uvicorn[standard]==0.53.0
+python-multipart==0.0.32
+httpx==0.28.1
+
+# --- Opzionali: installati da scripts/setup.sh in base alla modalità scelta ---
+# STT locale (offline):   pip install faster-whisper==1.2.1
+# TTS locale (offline):   pip install piper-tts==1.8.0

@@ -1,0 +1,72 @@
+:root{
+  --bg:#050a12; --panel:#0b1422; --line:#16263c;
+  --cyan:#64d2ff; --cyan-dim:#2b7fa8; --text:#dce8f5; --muted:#7c93ad;
+  --warn:#ffb648; --err:#ff6b6b; --ok:#54e0a0;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:radial-gradient(1200px 600px at 50% -10%,#0d1b2e 0%,var(--bg) 60%);
+  color:var(--text); font:15px/1.5 ui-sans-serif,system-ui,"Segoe UI",Roboto,sans-serif;
+  display:flex; flex-direction:column; min-height:100dvh;
+}
+.top{display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:14px 16px; border-bottom:1px solid var(--line); flex-wrap:wrap}
+.brand{display:flex; align-items:center; gap:10px}
+h1{font-size:16px; letter-spacing:.24em; margin:0; font-weight:600}
+h1 small{color:var(--cyan-dim); letter-spacing:.1em; font-size:11px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--muted);box-shadow:0 0 10px currentColor}
+.dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.err{background:var(--err)}
+.chips{display:flex; gap:6px; flex-wrap:wrap}
+.chip{font-size:11px; padding:3px 9px; border-radius:99px; border:1px solid var(--line);
+  color:var(--muted); background:var(--panel); white-space:nowrap}
+.chip.ok{color:var(--ok);border-color:#1d4a38} .chip.bad{color:var(--warn);border-color:#4a3a1d}
+
+main{flex:1; display:flex; flex-direction:column; align-items:center; padding:24px 16px; gap:22px}
+.stage{display:flex; flex-direction:column; align-items:center; gap:10px}
+
+.mic{position:relative; width:148px; height:148px; border-radius:50%; cursor:pointer;
+  background:var(--panel); border:1px solid var(--line); color:var(--cyan);
+  display:grid; place-items:center; transition:transform .12s ease, box-shadow .2s ease}
+.mic svg{width:44px;height:44px;fill:none;stroke:currentColor;stroke-width:1.6;
+  stroke-linecap:round;stroke-linejoin:round;position:relative;z-index:2}
+.mic .ring{position:absolute; inset:-6px; border-radius:50%; border:1px solid var(--cyan-dim); opacity:.5}
+.mic .core{position:absolute; inset:18px; border-radius:50%;
+  background:radial-gradient(circle,rgba(100,210,255,.22),transparent 70%)}
+.mic:hover{box-shadow:0 0 0 1px var(--cyan-dim),0 0 40px rgba(100,210,255,.18)}
+.mic:active{transform:scale(.97)}
+.mic.rec{color:#fff; border-color:var(--cyan); box-shadow:0 0 0 1px var(--cyan),0 0 60px rgba(100,210,255,.35)}
+.mic.rec .ring{animation:pulse 1.2s ease-out infinite}
+.mic.busy{opacity:.55; pointer-events:none}
+.mic.speak .core{animation:glow .9s ease-in-out infinite}
+@keyframes pulse{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.28);opacity:0}}
+@keyframes glow{0%,100%{opacity:.4}50%{opacity:1}}
+
+.hint{margin:0;color:var(--muted);font-size:12.5px}
+kbd{border:1px solid var(--line);border-radius:5px;padding:1px 5px;background:var(--panel);font-size:11px}
+.state{margin:0;min-height:20px;font-size:13px;color:var(--cyan)}
+.state.err{color:var(--err)}
+
+.log{width:100%; max-width:720px; display:flex; flex-direction:column; gap:10px}
+.msg{padding:11px 14px; border-radius:12px; border:1px solid var(--line); background:var(--panel); max-width:86%}
+.msg.user{align-self:flex-end; border-color:#1d3350; background:#0e1b2c}
+.msg.jarvis{align-self:flex-start}
+.msg .who{display:block;font-size:10px;letter-spacing:.18em;color:var(--muted);margin-bottom:4px}
+.msg.jarvis .who{color:var(--cyan-dim)}
+.msg.sys{align-self:center;text-align:center;border-style:dashed;color:var(--muted);font-size:12.5px}
+
+.bottom{display:flex; align-items:center; gap:10px; justify-content:center; flex-wrap:wrap;
+  padding:12px 16px; border-top:1px solid var(--line); color:var(--muted); font-size:12px}
+.ghost{background:transparent;border:1px solid var(--line);color:var(--muted);
+  padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px}
+.ghost:hover{color:var(--text);border-color:var(--cyan-dim)}
+.privacy{opacity:.7}
+
+.textbar{display:flex;gap:8px;padding:0 16px 16px;max-width:720px;width:100%;margin:0 auto}
+.textbar input{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--text);
+  padding:10px 12px;border-radius:9px;font:inherit}
+.textbar input:focus{outline:none;border-color:var(--cyan-dim)}
+.textbar button{background:var(--cyan-dim);border:0;color:#03121c;padding:10px 16px;
+  border-radius:9px;cursor:pointer;font-weight:600}
+@media (max-width:520px){.mic{width:124px;height:124px}.msg{max-width:94%}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
