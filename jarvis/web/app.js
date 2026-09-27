@@ -98,14 +98,21 @@
     speechSynthesis.cancel();
     speechSynthesis.speak(u);
   }
-  function playWav(b64) {
+  function playAudio(src, revoke) {
     return new Promise((resolve) => {
-      const audio = new Audio("data:audio/wav;base64," + b64);
+      const audio = new Audio(src);
+      const done = () => {
+        micBtn.classList.remove("speak");
+        if (revoke) URL.revokeObjectURL(src);
+        resolve();
+      };
       micBtn.classList.add("speak");
-      audio.onended = audio.onerror = () => { micBtn.classList.remove("speak"); resolve(); };
-      audio.play().catch(() => { micBtn.classList.remove("speak"); resolve(); });
+      audio.onended = audio.onerror = done;
+      audio.play().catch(done);
     });
   }
+  const playWav = (b64) => playAudio("data:audio/wav;base64," + b64);
+  const playBlob = (blob) => playAudio(URL.createObjectURL(blob), true);
   function speak(reply, b64) {
     if (b64) return playWav(b64);
     speakBrowser(reply);
@@ -160,10 +167,8 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: data.reply }),
         });
-        if (t.ok && t.headers.get("content-type") === "audio/wav") {
-          const buf = await t.arrayBuffer();
-          const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-          await playWav(b64);
+        if (t.ok && (t.headers.get("content-type") || "").startsWith("audio/")) {
+          await playBlob(await t.blob());
         } else speakBrowser(data.reply);
       } else speakBrowser(data.reply);
     } catch (e) {

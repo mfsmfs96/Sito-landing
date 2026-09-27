@@ -21,11 +21,11 @@ source .venv/bin/activate
 
 echo "▶ Installo le dipendenze core"
 pip install --upgrade pip >/dev/null
-pip install -r requirements.txt
+pip install -q -r requirements.txt
 
 if [[ $LITE -eq 0 ]]; then
   echo "▶ Installo STT locale (faster-whisper) e TTS locale (piper-tts)"
-  pip install "faster-whisper==1.2.1" "piper-tts==1.8.0"
+  pip install -q "faster-whisper==1.2.1" "piper-tts==1.8.0"
 
   VOICE="$(grep -E '^JARVIS_PIPER_VOICE=' .env 2>/dev/null | cut -d= -f2 || true)"
   VOICE="${VOICE:-it_IT-paola-medium}"
