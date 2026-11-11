@@ -1,7 +1,7 @@
 /* ===================================================================
    Arrivo in volo 3D
    "Da dove parti?" diventa un volo animato dalla città dell'ospite
-   fino al Palazzo, con la panoramica dei tre luoghi del weekend.
+   fino al Palazzo, che all'arrivo sorge in 3D dalla mappa.
    MapLibre GL viene caricato solo quando qualcuno avvia il volo.
    =================================================================== */
 (() => {
@@ -19,31 +19,8 @@
 
   const DIRECTIONS_DEST = "Praia a Mare (CS)";
 
-  const PLACES = {
-    beach: {
-      lng: 15.78476, lat: 39.87663,
-      when: "Sab 3 luglio · 20:00",
-      title: "Pizza Party",
-      place: "Budda Beach, Praia a Mare",
-      maps: "https://www.google.com/maps/search/?api=1&query=Budda%20Beach%2C%20Contrada%20Fiuzzi%2C%2087028%20Praia%20a%20Mare%20%28CS%29"
-    },
-    chiesa: {
-      lng: 15.82330, lat: 39.71660,
-      when: "Dom 4 luglio · 16:30",
-      title: "Cerimonia",
-      place: "Convento dei Minimi, Cirella",
-      maps: "https://www.google.com/maps/search/?api=1&query=Chiesa%20Santa%20Maria%20delle%20Grazie%2C%20Convento%20dei%20Minimi%20di%20San%20Francesco%2C%2087023%20Cirella%20di%20Diamante%20%28CS%29"
-    },
-    palazzo: {
-      lng: 15.78241, lat: 39.84513,
-      when: "Dom 4 luglio · 18:30",
-      title: "Ricevimento",
-      place: "Palazzo dei Principi Lanza",
-      maps: "https://www.google.com/maps/search/?api=1&query=Palazzo%20dei%20Principi%20Lanza%20di%20Trabia%2C%20Corso%20Principi%20Lanza%20di%20Trabia%2C%2087020%20San%20Nicola%20Arcella%20%28CS%29"
-    }
-  };
-  const STOP_ORDER = ["beach", "chiesa", "palazzo"];
-  // la costa guarda a ovest: inquadriamo dal mare verso le colline, così niente copre i luoghi
+  const PALAZZO = { lng: 15.78241, lat: 39.84513 };
+  // la costa guarda a ovest: all'arrivo inquadriamo dal mare verso le colline
   const VIEW_BEARING = 78;
 
   const C = {
@@ -51,7 +28,8 @@
     ink: "#46392d", inkSoft: "#7a6a58",
     rose: "#c1815f", roseDeep: "#9c5f42", roseSoft: "#e6c4ae",
     sage: "#8a9873", wood: "#dfe2cc", grass: "#e7e6d1",
-    sea: "#c6d7d3", seaDeep: "#b4c9c5"
+    sea: "#c6d7d3", seaDeep: "#b4c9c5",
+    wall: "#ecc9b6", eaves: "#cf9273", roof: "#b9714f", shutter: "#5f4638", portal: "#4b382d", court: "#e9dfcb"
   };
 
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -243,12 +221,14 @@
           attribution: '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> · <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">© OpenMapTiles</a> · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a>'
         },
         dem: {
-          type: "raster-dem", tiles: [DEM], tileSize: 256, maxzoom: 14, encoding: "terrarium",
+          type: "raster-dem", tiles: [DEM], tileSize: 512, maxzoom: 14, encoding: "terrarium",
           attribution: 'Rilievo: <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener">Terrain Tiles</a>'
-        },
-        demShade: { type: "raster-dem", tiles: [DEM], tileSize: 256, maxzoom: 14, encoding: "terrarium" }
+        }
       },
-      terrain: { source: "dem", exaggeration: 1.45 },
+      // Il rilievo è reso con le ombre (hillshade), non con un terreno 3D vero e proprio:
+      // è molto più leggero per i telefoni e la mappa non resta bianca mentre la rotta si disegna.
+      // luce morbida: le facciate in ombra restano rosa, non grigie
+      light: { anchor: "viewport", intensity: .2, color: "#fff6ec" },
       sky: {
         "sky-color": "#e9ddc8",
         "horizon-color": "#f6efe2",
@@ -272,12 +252,12 @@
         { id: "landuse-town", type: "fill", source: "omt", "source-layer": "landuse",
           filter: ["match", ["get", "class"], ["residential", "suburb", "neighbourhood", "commercial", "retail"], true, false],
           paint: { "fill-color": C.paper2, "fill-opacity": ["interpolate", ["linear"], ["zoom"], 8, 0, 11, .8] } },
-        { id: "hillshade", type: "hillshade", source: "demShade",
+        { id: "hillshade", type: "hillshade", source: "dem",
           paint: {
             "hillshade-shadow-color": "rgba(122,106,88,.55)",
             "hillshade-highlight-color": "rgba(255,253,249,.55)",
             "hillshade-accent-color": "rgba(156,95,66,.18)",
-            "hillshade-exaggeration": .55
+            "hillshade-exaggeration": .7
           } },
         { id: "water", type: "fill", source: "omt", "source-layer": "water",
           paint: { "fill-color": C.sea } },
@@ -364,30 +344,14 @@
         <p>Su questo dispositivo non riusciamo a mostrare il volo in 3D.</p>
         <a class="origin-btn primary" id="voloFailLink" target="_blank" rel="noopener">Apri il percorso su Google Maps</a>
       </div>
-      <section class="volo-card" id="voloCard" aria-label="Il vostro weekend">
-        <p class="eyebrow">Il vostro weekend</p>
-        <ol class="volo-stops" id="voloStops"></ol>
+      <div class="volo-bar" id="voloBar">
         <div class="volo-actions">
           <a class="origin-btn primary" id="voloDirections" target="_blank" rel="noopener">Indicazioni stradali</a>
           <button class="origin-btn" id="voloReplay" type="button">Rivedi il volo</button>
         </div>
         <p class="volo-credits">Mappa <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a> · <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> · <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">© OpenMapTiles</a> · Rilievo <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener">Terrain Tiles</a></p>
-      </section>`;
+      </div>`;
     document.body.appendChild(el);
-
-    const stops = $("#voloStops", el);
-    STOP_ORDER.forEach(key => {
-      const p = PLACES[key];
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <span class="volo-num" aria-hidden="true">${STOP_ORDER.indexOf(key) + 1}</span>
-        <button type="button" class="volo-stop" data-stop="${key}">
-          <span class="volo-when">${p.when}</span>
-          <span class="volo-what">${p.title}<small>${p.place}</small></span>
-        </button>
-        <a class="volo-maplink" href="${p.maps}" target="_blank" rel="noopener" aria-label="${p.place} su Google Maps">Mappa</a>`;
-      stops.appendChild(li);
-    });
     return el;
   }
 
@@ -395,9 +359,9 @@
     return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(DIRECTIONS_DEST)}`;
   }
 
-  /* ---------- il volo ---------- */
+  /* ---------- stato ---------- */
   let overlay = null, map = null, raf = 0, phase = "idle", trip = null, prevOverflow = "";
-  let heartMarker = null, stopMarkers = [];
+  let heartMarker = null, palazzoMarker = null;
 
   function ui(id) { return $("#" + id, overlay); }
 
@@ -407,37 +371,9 @@
       .forEach(h => map[h] && (on ? map[h].enable() : map[h].disable()));
   }
 
-  function headPadding() {
+  function headBottom() {
     const head = $(".volo-head", overlay);
     return head ? head.getBoundingClientRect().bottom : 0;
-  }
-
-  function makeHeart() {
-    const el = document.createElement("div");
-    el.className = "volo-heart";
-    el.innerHTML = HEART;
-    return el;
-  }
-
-  function makePin(key, n) {
-    const p = PLACES[key];
-    const el = document.createElement("div");
-    el.className = "volo-pin" + (key === "palazzo" ? " main" : "");
-    el.dataset.stop = key;
-    el.innerHTML = `<div class="volo-pin-in">
-        <span class="volo-pin-label"><b>${p.title}</b>${p.when}</span>
-        <i>${key === "palazzo" ? HEART : ""}<em>${n}</em></i>
-      </div>`;
-    el.addEventListener("click", e => { e.stopPropagation(); focusStop(key); });
-    return el;
-  }
-
-  function setActiveStop(key) {
-    stopMarkers.forEach(m => {
-      const el = m.getElement();
-      el.classList.toggle("active", el.dataset.stop === key);
-    });
-    overlay.querySelectorAll(".volo-stop").forEach(b => b.classList.toggle("active", b.dataset.stop === key));
   }
 
   function collapseAttribution() {
@@ -445,21 +381,22 @@
     if (a) a.classList.remove("maplibregl-compact-show");
   }
 
-  function clearStops() {
-    stopMarkers.forEach(m => m.remove());
-    stopMarkers = [];
+  function showPalazzoMarker() {
+    if (palazzoMarker) return;
+    const el = document.createElement("div");
+    el.className = "volo-pin";
+    el.innerHTML = `<div class="volo-pin-in">
+        <span class="volo-pin-label"><b>Palazzo dei Principi Lanza</b>San Nicola Arcella</span>
+        <i>${HEART}</i>
+      </div>`;
+    palazzoMarker = new maplibregl.Marker({ element: el, anchor: "center", opacityWhenCovered: "1" })
+      .setLngLat(palazzoCenter || [PALAZZO.lng, PALAZZO.lat]).addTo(map);
+  }
+  function hidePalazzoMarker() {
+    if (palazzoMarker) { palazzoMarker.remove(); palazzoMarker = null; }
   }
 
-  function showStops() {
-    clearStops();
-    STOP_ORDER.forEach((key, i) => {
-      const el = makePin(key, i + 1);
-      el.firstElementChild.style.animationDelay = (i * 160) + "ms";
-      stopMarkers.push(new maplibregl.Marker({ element: el, anchor: "center", opacityWhenCovered: "1" })
-        .setLngLat([PLACES[key].lng, PLACES[key].lat]).addTo(map));
-    });
-  }
-
+  /* ---------- la rotta ---------- */
   function lineData(coords) {
     return { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords } };
   }
@@ -485,15 +422,115 @@
     if (!src) return;
     if (p >= 1) return src.setData(lineData(trip.full));
     const now = performance.now();
-    if (!force && now - lastDraw < 50) return;
+    if (!force && now - lastDraw < 30) return;
     lastDraw = now;
     const pos = pointAt(p);
     src.setData(lineData(trip.coords.slice(0, pos.index + 1).concat([[pos[0], pos[1]]])));
   }
 
   const pointAt = p => alongAt(trip.coords, trip.cum, p);
-  // Movimento di camera fotogramma per fotogramma: così la quota del terreno sotto il
-  // centro viene ricalcolata di continuo e l'inquadratura resta precisa anche in 3D.
+  const zoomAt = s => trip.zStart + (trip.zEnd - trip.zStart) * s - trip.arc * Math.sin(Math.PI * s);
+
+  // partenza e frenata dolci, velocità costante nel mezzo
+  function easeCruise(t) {
+    const a = .14, k = 1 / (1 - a);
+    if (t < a) return k * t * t / (2 * a);
+    if (t > 1 - a) return 1 - k * (1 - t) * (1 - t) / (2 * a);
+    return k * (t - a / 2);
+  }
+
+  function planTrip(origin, route) {
+    const km = distanceKm(origin, PALAZZO);
+    const full = route ? route.coords
+      : greatCircle(origin, PALAZZO, Math.max(60, Math.min(700, Math.round(km / 2))));
+    // per l'animazione basta una versione alleggerita (entro ~20 m dalla strada)
+    const coords = route ? simplify(full, 20) : full;
+    const cum = cumulative(coords);
+    const w = Math.max(320, overlay.clientWidth || innerWidth);
+    const midLat = (origin.lat + PALAZZO.lat) / 2;
+    // zoom alla quale la tratta occupa circa metà della larghezza dello schermo
+    const zFit = Math.log2(156543 * Math.cos(toRad(midLat)) * w / Math.max(1, km * 1000 * .55));
+    const zStart = 11, zEnd = 13.2;
+    // seguendo le strade si resta un po' più bassi, così il percorso si legge
+    const zMid = Math.max(3, Math.min(zFit + (route ? 1 : 0), 10.5));
+    const arc = Math.max(0, (zStart + zEnd) / 2 - zMid);
+    const t = { origin, km, full, coords, cum, zStart, zEnd, arc, road: !!route,
+      bearing: bearingDeg(coords[0], alongAt(coords, cum, .03)) };
+
+    // Velocità costante *sullo schermo*: dall'alto si corre, vicino a terra si rallenta.
+    // Per ogni tratto si calcola quanti pixel occupa alla quota prevista; il tempo segue i pixel.
+    const N = 400, totalM = cum[cum.length - 1] * 1000, mpp0 = 78271.5 * Math.cos(toRad(midLat));
+    const z = s => zStart + (zEnd - zStart) * s - arc * Math.sin(Math.PI * s);
+    const px = [0];
+    for (let i = 1; i <= N; i++) px.push(px[i - 1] + (totalM / N) / (mpp0 / 2 ** z((i - .5) / N)));
+    t.px = px;
+    t.duration = Math.max(10000, Math.min(24000, px[N] / 380 * 1000));
+    return t;
+  }
+
+  // frazione di percorso raggiunta alla frazione di tempo u
+  function progressAt(u) {
+    const px = trip.px, N = px.length - 1, target = u * px[N];
+    let lo = 0, hi = N;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (px[mid] <= target) lo = mid; else hi = mid; }
+    const seg = px[hi] - px[lo];
+    return (lo + (seg > 0 ? (target - px[lo]) / seg : 0)) / N;
+  }
+
+  /* ---------- mappa pronta prima di passarci sopra ---------- */
+  // Scarica in anticipo le tessere lungo il percorso: quando il volo ci arriva sono già
+  // nella memoria del browser e la mappa non resta bianca.
+  let tileTemplateP = null;
+  function tileTemplate() {
+    if (!tileTemplateP) {
+      tileTemplateP = fetch(`${OFM}/planet`).then(r => r.json()).then(j => j.tiles[0]);
+      tileTemplateP.catch(() => { tileTemplateP = null; });
+    }
+    return tileTemplateP;
+  }
+
+  function tileOf(lng, lat, z) {
+    const n = 2 ** z;
+    const y = (1 - Math.asinh(Math.tan(toRad(lat))) / Math.PI) / 2 * n;
+    return [Math.floor((lng + 180) / 360 * n), Math.floor(y)];
+  }
+
+  function prewarm(t) {
+    const keys = new Set(), r = (overlay.clientWidth || innerWidth) > 900 ? 2 : 1;
+    const z = s => t.zStart + (t.zEnd - t.zStart) * s - t.arc * Math.sin(Math.PI * s);
+    for (let i = 0; i <= 300 && keys.size < 260; i++) {
+      const s = i / 300, pos = alongAt(t.coords, t.cum, s);
+      const tz = Math.max(0, Math.min(14, Math.floor(z(s))));
+      const [x, y] = tileOf(pos[0], pos[1], tz);
+      for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) keys.add(`${tz}/${x + dx}/${y + dy}`);
+    }
+    // i dettagli intorno al Palazzo, per l'arrivo
+    const [px, py] = tileOf(PALAZZO.lng, PALAZZO.lat, 14);
+    for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) keys.add(`14/${px + dx}/${py + dy}`);
+
+    const list = [...keys];
+    let done = 0, next = 0, alive = true;
+    const first = new Promise(resolve => {
+      tileTemplate().then(tpl => {
+        const urls = k => {
+          const [tz, x, y] = k.split("/");
+          const fill = u => u.replace("{z}", tz).replace("{x}", x).replace("{y}", y);
+          return [fill(tpl), fill(DEM)];
+        };
+        const worker = () => {
+          if (!alive || next >= list.length) return;
+          const k = list[next++];
+          Promise.all(urls(k).map(u => fetch(u).then(res => res.arrayBuffer()).catch(() => {})))
+            .then(() => { if (++done >= Math.min(list.length, 60)) resolve(); worker(); });
+        };
+        for (let i = 0; i < 8; i++) worker();
+      }).catch(resolve);
+    });
+    return { first, stop() { alive = false; } };
+  }
+
+  /* ---------- movimenti di camera ---------- */
+  // Fotogramma per fotogramma, così ogni movimento si può interrompere in qualsiasi momento.
   function tween(to, duration, easing, done) {
     cancelAnimationFrame(raf);
     const c0 = map.getCenter(), z0 = map.getZoom(), p0 = map.getPitch(), b0 = map.getBearing(), pad0 = map.getPadding();
@@ -521,35 +558,22 @@
     raf = requestAnimationFrame(step);
   }
 
-  function planTrip(origin, route) {
-    const dest = PLACES.palazzo;
-    const km = distanceKm(origin, dest);
-    const full = route ? route.coords
-      : greatCircle(origin, dest, Math.max(60, Math.min(700, Math.round(km / 2))));
-    // per l'animazione basta una versione alleggerita (entro ~20 m dalla strada)
-    const coords = route ? simplify(full, 20) : full;
-    const cum = cumulative(coords);
-    const w = Math.max(320, overlay.clientWidth || innerWidth);
-    const midLat = (origin.lat + dest.lat) / 2;
-    // zoom alla quale la tratta occupa circa metà della larghezza dello schermo
-    const zFit = Math.log2(156543 * Math.cos(toRad(midLat)) * w / Math.max(1, km * 1000 * .55));
-    const zStart = 11, zEnd = 13.2;
-    // seguendo le strade si resta un po' più bassi, così il percorso si legge
-    const zMid = Math.max(3, Math.min(zFit + (route ? 1 : 0), 10.5));
-    const arc = Math.max(0, (zStart + zEnd) / 2 - zMid);
-    const tripKm = route ? route.km : km;
-    const duration = Math.max(8000, Math.min(18000, 7000 + tripKm * 8));
-    return { origin, km, full, coords, cum, zStart, zEnd, arc, duration, road: !!route,
-      bearing: bearingDeg(coords[0], alongAt(coords, cum, .03)) };
+  // l'inquadratura finale: il Palazzo al centro dello spazio libero tra titolo e pulsanti
+  function finalView() {
+    const bar = ui("voloBar");
+    return {
+      center: [PALAZZO.lng, PALAZZO.lat], zoom: 17.5, pitch: 60,
+      padding: { top: Math.round(headBottom()) + 10, bottom: overlay.clientHeight - bar.offsetTop + 10, left: 0, right: 0 }
+    };
   }
 
   function fly() {
     phase = "flight";
     setInteractive(false);
-    clearStops();
     removePalazzo();
-    ui("voloCard").classList.remove("show");
-    overlay.classList.remove("has-card");
+    hidePalazzoMarker();
+    ui("voloBar").classList.remove("show");
+    overlay.classList.remove("arrived");
     ui("voloSkip").classList.add("show");
     ui("voloEyebrow").textContent = "Il vostro viaggio";
     collapseAttribution();
@@ -558,33 +582,27 @@
     if (!heartMarker) heartMarker = new maplibregl.Marker({ element: makeHeart(), anchor: "center", opacityWhenCovered: "1" });
     heartMarker.setLngLat(trip.coords[0]).addTo(map);
 
-    const top = headPadding();
-    map.setPadding({ top: Math.round(top * .6), bottom: 0, left: 0, right: 0 });
-    let bearing = trip.bearing;
-    // la camera insegue il cuore con un filo di ritardo: la strada curva, la ripresa resta fluida
-    let cam = trip.coords[0].slice(0, 2), last = 0;
-    map.jumpTo({ center: cam, zoom: trip.zStart, pitch: 48, bearing });
+    map.setPadding({ top: Math.round(headBottom() * .6), bottom: 0, left: 0, right: 0 });
+    let bearing = trip.bearing, last = 0;
+    map.jumpTo({ center: trip.coords[0], zoom: trip.zStart, pitch: 46, bearing });
 
     // breve pausa sulla città di partenza prima del decollo
-    const hold = 900;
-    const t0 = performance.now() + hold;
+    const t0 = performance.now() + 900;
     cancelAnimationFrame(raf);
     const step = now => {
       if (phase !== "flight") return;
       const t = Math.max(0, Math.min(1, (now - t0) / trip.duration));
-      const p = easeSine(t);
-      const pos = pointAt(p);
-      setProgress(p);
+      const s = progressAt(easeCruise(t));
+      const pos = pointAt(s);
+      setProgress(s);
       heartMarker.setLngLat(pos);
 
-      const k = last ? 1 - Math.exp(-(now - last) / 260) : 0;
-      last = now;
-      cam = [cam[0] + (pos[0] - cam[0]) * k, cam[1] + (pos[1] - cam[1]) * k];
       // direzione di marcia su un tratto lungo, così i tornanti non fanno girare la testa
-      if (p < .97) bearing = lerpAngle(bearing, bearingDeg(pointAt(p - .03), pointAt(p + .03)), .04);
-      const zoom = trip.zStart + (trip.zEnd - trip.zStart) * p - trip.arc * Math.sin(Math.PI * p);
-      const pitch = 48 + 14 * Math.sin(Math.PI * Math.min(1, p * 1.2));
-      map.jumpTo({ center: cam, zoom, pitch, bearing });
+      const k = last ? 1 - Math.exp(-(now - last) / 700) : 0;
+      last = now;
+      if (s < .97) bearing = lerpAngle(bearing, bearingDeg(pointAt(s - .03), pointAt(s + .03)), k);
+      // il cuore resta sempre al centro dello schermo
+      map.jumpTo({ center: [pos[0], pos[1]], zoom: zoomAt(s), pitch: 46 + 10 * Math.sin(Math.PI * s), bearing });
 
       if (t < 1) raf = requestAnimationFrame(step);
       else arrive();
@@ -592,8 +610,82 @@
     raf = requestAnimationFrame(step);
   }
 
+  function makeHeart() {
+    const el = document.createElement("div");
+    el.className = "volo-heart";
+    el.innerHTML = HEART;
+    return el;
+  }
+
+  function arrive() {
+    phase = "arrive";
+    ui("voloEyebrow").textContent = "Benvenuti in Calabria";
+    setProgress(1);
+    heartMarker && heartMarker.remove();
+    const view = finalView();
+    tween({ ...view, bearing: VIEW_BEARING + 14 }, 5200, easeInOut, () => {
+      // aspetta un attimo i dettagli degli edifici, poi il Palazzo sorge mentre la camera gli gira intorno
+      const since = performance.now();
+      const wait = () => {
+        if (phase !== "arrive" || !map) return;
+        if (!palazzoFootprint() && performance.now() - since < 3500) return setTimeout(wait, 250);
+        raisePalazzo(true);
+        tween({ bearing: VIEW_BEARING + 60 }, 4600, t => t, () => { if (phase === "arrive") settle(); });
+      };
+      wait();
+    });
+  }
+
+  // fine del viaggio: resta solo il Palazzo, che gira lentamente finché non si tocca la mappa
+  function settle(instant) {
+    phase = "arrived";
+    cancelAnimationFrame(raf);
+    ui("voloSkip").classList.remove("show");
+    ui("voloEyebrow").textContent = "Benvenuti in Calabria";
+    setProgress(1);
+    heartMarker && heartMarker.remove();
+    ui("voloBar").classList.add("show");
+    overlay.classList.add("arrived");
+    collapseAttribution();
+    if (instant) map.jumpTo({ ...finalView(), bearing: VIEW_BEARING + 60 });
+    raisePalazzo(false);
+    showPalazzoMarker();
+    setInteractive(true);
+    if (reduceMotion) return;
+    let last = 0;
+    const orbit = now => {
+      if (phase !== "arrived" || !map) return;
+      if (last) map.jumpTo({ center: palazzoCenter || [PALAZZO.lng, PALAZZO.lat], bearing: map.getBearing() + (now - last) * .004 });
+      last = now;
+      raf = requestAnimationFrame(orbit);
+    };
+    raf = requestAnimationFrame(orbit);
+  }
+
+  function skip() {
+    if (phase !== "flight" && phase !== "arrive") return;
+    settle(true);
+  }
+
   /* ---------- il Palazzo che sorge in 3D ---------- */
-  let palazzoState = null;
+  // Un modello fatto a mano: quattro ali intorno al cortile, tetto in coppi, due ordini di
+  // finestre, portale e loggia a tre archi. Posizione, misure e orientamento vengono dalla
+  // pianta reale dell'edificio sulla mappa (OpenStreetMap), quando c'è.
+  const PARTS = [
+    { part: "court",  color: C.court,   base: 0,    height: .15 },
+    { part: "walls",  color: C.wall,    base: 0,    height: 10.4 },
+    { part: "eaves",  color: C.eaves,   base: 10.4, height: 10.9 },
+    { part: "roof1",  color: C.roof,    base: 10.9, height: 11.6 },
+    { part: "roof2",  color: C.roof,    base: 11.6, height: 12.2 },
+    { part: "roof3",  color: C.eaves,   base: 12.2, height: 12.6 },
+    { part: "win0",   color: C.shutter, base: 1.4,  height: 3.6 },
+    { part: "win1",   color: C.shutter, base: 5.6,  height: 8.6 },
+    { part: "portal", color: C.portal,  base: 0,    height: 4.6 },
+    { part: "arches", color: C.portal,  base: 5.6,  height: 9.2 }
+  ];
+  let palazzoState = null, palazzoCenter = null;
+
+  const KY = 111320, kxAt = lat => 111320 * Math.cos(toRad(lat));
 
   function ringCentroid(ring) {
     let x = 0, y = 0;
@@ -609,12 +701,12 @@
     return inside;
   }
 
-  // pianta reale dell'edificio, presa dai dati della mappa già caricati
+  // pianta reale dell'edificio, dai dati della mappa già caricati: centro, lati e orientamento
   function palazzoFootprint() {
-    const P = [PLACES.palazzo.lng, PLACES.palazzo.lat];
+    const P = [PALAZZO.lng, PALAZZO.lat];
     let feats = [];
     try { feats = map.querySourceFeatures("omt", { sourceLayer: "building" }); } catch {}
-    let best = null, bestD = Infinity, bestH = 0;
+    let best = null, bestD = Infinity, bestId = null;
     feats.forEach(f => {
       const g = f.geometry || {};
       const polys = g.type === "Polygon" ? [g.coordinates] : g.type === "MultiPolygon" ? g.coordinates : [];
@@ -623,139 +715,129 @@
         if (!ring || ring.length < 4) return;
         const c = ringCentroid(ring);
         const d = pointInRing(P, ring) ? 0 : distanceKm({ lng: P[0], lat: P[1] }, { lng: c[0], lat: c[1] }) * 1000;
-        if (d < bestD) { bestD = d; best = ring; bestH = +(f.properties && f.properties.render_height) || 0; }
+        if (d < bestD) { bestD = d; best = ring; bestId = f.id; }
       });
     });
-    return best && bestD <= 35 ? { ring: best, h: bestH } : null;
+    if (!best || bestD > 35) return null;
+
+    // rettangolo orientato: l'asse è quello del lato più lungo della pianta
+    const kx = kxAt(PALAZZO.lat), c = ringCentroid(best);
+    const pts = best.map(p => [(p[0] - c[0]) * kx, (p[1] - c[1]) * KY]);
+    let angle = 0, longest = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const dx = pts[i][0] - pts[i - 1][0], dy = pts[i][1] - pts[i - 1][1], len = Math.hypot(dx, dy);
+      if (len > longest) { longest = len; angle = Math.atan2(dy, dx); }
+    }
+    const cos = Math.cos(-angle), sin = Math.sin(-angle);
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    pts.forEach(([x, y]) => {
+      const rx = x * cos - y * sin, ry = x * sin + y * cos;
+      x0 = Math.min(x0, rx); x1 = Math.max(x1, rx); y0 = Math.min(y0, ry); y1 = Math.max(y1, ry);
+    });
+    let L = x1 - x0, W = y1 - y0;
+    // centro del rettangolo, riportato in coordinate geografiche
+    const mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+    const center = [c[0] + (mx * Math.cos(angle) - my * Math.sin(angle)) / kx, c[1] + (mx * Math.sin(angle) + my * Math.cos(angle)) / KY];
+    if (W > L) { [L, W] = [W, L]; angle += Math.PI / 2; }
+    if (W < 22 || L > 120) return null;   // non è il Palazzo
+    return { center, L, W, angle, id: bestId };
   }
 
-  // se la mappa non ha la pianta, un volume semplice nel punto del Palazzo
-  function palazzoFallback() {
-    const { lng, lat } = PLACES.palazzo;
-    const dy = 12 / 111320, dx = 19 / (111320 * Math.cos(toRad(lat)));
-    return { ring: [[lng - dx, lat - dy], [lng + dx, lat - dy], [lng + dx, lat + dy], [lng - dx, lat + dy], [lng - dx, lat - dy]], h: 0 };
-  }
+  function palazzoModel(fp) {
+    const { center, L, W, angle } = fp, kx = kxAt(center[1]);
+    const cos = Math.cos(angle), sin = Math.sin(angle);
+    const geo = ([x, y]) => [center[0] + (x * cos - y * sin) / kx, center[1] + (x * sin + y * cos) / KY];
+    const rect = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]].map(geo);
+    const feats = [];
+    const add = (part, rings) => feats.push({ type: "Feature", properties: { part }, geometry: { type: "Polygon", coordinates: rings } });
 
-  function palazzoData(fp) {
-    // leggermente più largo della pianta, così copre l'edificio "normale" sotto
-    const c = ringCentroid(fp.ring);
-    const ring = fp.ring.map(p => [c[0] + (p[0] - c[0]) * 1.06, c[1] + (p[1] - c[1]) * 1.06]);
-    return { type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [ring] } };
+    const hl = L / 2, hw = W / 2, d = Math.min(9.5, W * .26);   // profondità delle ali
+    const ring = (out, inn) => [rect(-hl - out, -hw - out, hl + out, hw + out), rect(-hl + d - inn, -hw + d - inn, hl - d + inn, hw - d + inn).reverse()];
+    add("court", [rect(-hl + d, -hw + d, hl - d, hw - d)]);
+    add("walls", ring(0, 0));
+    add("eaves", ring(.55, .45));
+    add("roof1", ring(-d * .12, -d * .12));
+    add("roof2", ring(-d * .26, -d * .26));
+    add("roof3", ring(-d * .40, -d * .40));
+
+    // finestre: piccoli volumi scuri appena sporgenti dalle facciate
+    const out = .32, ww = .7;
+    const spread = (len, step) => {
+      const n = Math.max(3, Math.round(len / step));
+      return Array.from({ length: n }, (_, i) => -len / 2 + len * (i + .5) / n);
+    };
+    spread(L, 5.6).forEach(x => [-1, 1].forEach(side => {
+      const y = side * hw, r = rect(x - ww, Math.min(y, y + side * out), x + ww, Math.max(y, y + side * out));
+      add("win0", [r]); add("win1", [r]);
+    }));
+    // lati corti: al centro il portale e, sopra, la loggia a tre archi
+    spread(W, 5.4).forEach(y => [-1, 1].forEach(side => {
+      if (Math.abs(y) < 5.2) return;
+      const x = side * hl, r = rect(Math.min(x, x + side * out), y - ww, Math.max(x, x + side * out), y + ww);
+      add("win0", [r]); add("win1", [r]);
+    }));
+    [-1, 1].forEach(side => {
+      const x = side * hl, xa = Math.min(x, x + side * .45), xb = Math.max(x, x + side * .45);
+      add("portal", [rect(xa, -1.8, xb, 1.8)]);
+      [-2.7, 0, 2.7].forEach(y => add("arches", [rect(xa, y - .95, xb, y + .95)]));
+    });
+    return { type: "FeatureCollection", features: feats };
   }
 
   function raisePalazzo(animate) {
     if (!map) return;
     const found = palazzoFootprint();
-    if (map.getLayer("volo-palazzo")) {
-      if (found && palazzoState !== "real") {
-        map.getSource("volo-palazzo").setData(palazzoData(found));
+    const fp = found || { center: [PALAZZO.lng, PALAZZO.lat], L: 52, W: 40, angle: 0, id: null };
+    const state = found ? "real" : "fallback";
+    if (found || !palazzoCenter) palazzoCenter = fp.center;
+    // l'edificio "normale" della mappa lascia il posto al modello
+    if (found && found.id != null && map.getLayer("buildings")) map.setFilter("buildings", ["!=", ["id"], found.id]);
+
+    if (map.getSource("volo-palazzo")) {
+      if (state === "real" && palazzoState !== "real") {
+        map.getSource("volo-palazzo").setData(palazzoModel(fp));
+        if (palazzoMarker) palazzoMarker.setLngLat(fp.center);
         palazzoState = overlay.dataset.palazzo = "real";
       }
       return;
     }
-    const fp = found || palazzoFallback();
-    palazzoState = overlay.dataset.palazzo = found ? "real" : "fallback";
-    const height = Math.max(14, (fp.h || 0) + 5);
-    map.addSource("volo-palazzo", { type: "geojson", data: palazzoData(fp) });
-    map.addLayer({ id: "volo-palazzo", type: "fill-extrusion", source: "volo-palazzo",
+    palazzoState = overlay.dataset.palazzo = state;
+    const grow = animate && !reduceMotion;
+    map.addSource("volo-palazzo", { type: "geojson", data: palazzoModel(fp) });
+    PARTS.forEach(p => map.addLayer({
+      id: "volo-palazzo-" + p.part, type: "fill-extrusion", source: "volo-palazzo",
+      filter: ["==", ["get", "part"], p.part],
       paint: {
-        "fill-extrusion-color": C.rose,
-        "fill-extrusion-height": animate && !reduceMotion ? 0 : height,
-        "fill-extrusion-base": 0,
-        "fill-extrusion-opacity": .96,
-        "fill-extrusion-height-transition": { duration: 2400, delay: 0 }
-      } });
-    if (animate && !reduceMotion) {
-      requestAnimationFrame(() => {
-        if (map && map.getLayer("volo-palazzo")) map.setPaintProperty("volo-palazzo", "fill-extrusion-height", height);
-      });
+        "fill-extrusion-color": p.color,
+        "fill-extrusion-height": grow ? 0 : p.height,
+        "fill-extrusion-base": grow ? 0 : p.base,
+        "fill-extrusion-vertical-gradient": false,
+        "fill-extrusion-height-transition": { duration: 2600, delay: 0 },
+        "fill-extrusion-base-transition": { duration: 2600, delay: 0 }
+      }
+    }));
+    if (grow) {
+      requestAnimationFrame(() => PARTS.forEach(p => {
+        const id = "volo-palazzo-" + p.part;
+        if (!map || !map.getLayer(id)) return;
+        map.setPaintProperty(id, "fill-extrusion-height", p.height);
+        map.setPaintProperty(id, "fill-extrusion-base", p.base);
+      }));
     }
   }
 
   function removePalazzo() {
-    if (map && map.getLayer("volo-palazzo")) { map.removeLayer("volo-palazzo"); map.removeSource("volo-palazzo"); }
-    palazzoState = null;
+    if (map && map.getSource("volo-palazzo")) {
+      PARTS.forEach(p => map.getLayer("volo-palazzo-" + p.part) && map.removeLayer("volo-palazzo-" + p.part));
+      map.removeSource("volo-palazzo");
+      if (map.getLayer("buildings")) map.setFilter("buildings", null);
+    }
+    palazzoState = palazzoCenter = null;
     if (overlay) delete overlay.dataset.palazzo;
   }
 
-  function arrive() {
-    phase = "arrive";
-    ui("voloEyebrow").textContent = "Benvenuti in Calabria";
-    setProgress(1);
-    heartMarker && heartMarker.remove();
-    showStops();
-    setActiveStop("palazzo");
-    const center = [PLACES.palazzo.lng, PLACES.palazzo.lat];
-    tween({ center, zoom: 17.1, pitch: 62, bearing: VIEW_BEARING + 14 }, 4600, easeInOut, () => {
-      // aspetta un attimo i dettagli degli edifici, poi il Palazzo sorge mentre la camera gli gira intorno
-      const since = performance.now();
-      const wait = () => {
-        if (phase !== "arrive" || !map) return;
-        if (!palazzoFootprint() && performance.now() - since < 3500) return setTimeout(wait, 250);
-        raisePalazzo(true);
-        tween({ bearing: VIEW_BEARING + 52 }, 4200, t => t, () => { if (phase === "arrive") overview(); });
-      };
-      wait();
-    });
-  }
-
-  // la parte di mappa non coperta da intestazione e scheda finale
-  function freePadding(extra = 0) {
-    const card = ui("voloCard");
-    const W = overlay.clientWidth, H = overlay.clientHeight;
-    const top = Math.round(headPadding()) + 30 + extra;
-    const cardRight = card.offsetLeft + card.offsetWidth;
-    if (cardRight < W * .55) {
-      // scheda sul lato sinistro (schermi larghi)
-      return { top, bottom: 50 + extra, left: cardRight + 40 + extra, right: 50 + extra };
-    }
-    return { top, bottom: H - card.offsetTop + 24 + extra, left: 36 + extra, right: 36 + extra };
-  }
-
-  function overview(instant) {
-    phase = "overview";
-    cancelAnimationFrame(raf);
-    ui("voloSkip").classList.remove("show");
-    ui("voloEyebrow").textContent = "Benvenuti in Calabria";
-    setProgress(1);
-    heartMarker && heartMarker.remove();
-    if (!stopMarkers.length) showStops();
-    raisePalazzo(false);
-    setActiveStop(null);
-    collapseAttribution();
-
-    const card = ui("voloCard");
-    card.classList.add("show");
-    overlay.classList.add("has-card");
-    const bounds = new maplibregl.LngLatBounds();
-    STOP_ORDER.forEach(k => bounds.extend([PLACES[k].lng, PLACES[k].lat]));
-    const zero = { top: 0, bottom: 0, left: 0, right: 0 }, padNow = map.getPadding();
-    map.setPadding(zero);
-    const cam = map.cameraForBounds(bounds, { padding: freePadding(14), bearing: VIEW_BEARING, pitch: 0 });
-    map.setPadding(padNow);
-    const target = cam
-      ? { center: [cam.center.lng, cam.center.lat], zoom: Math.min(13, cam.zoom - .15) }
-      : { center: [15.80, 39.80], zoom: 10.2 };
-    tween({ ...target, bearing: VIEW_BEARING, pitch: 44, padding: zero },
-      instant ? 0 : 2600, easeInOut);
-    setInteractive(true);
-  }
-
-  function focusStop(key) {
-    if (phase !== "overview" || !map) return;
-    const p = PLACES[key];
-    setActiveStop(key);
-    tween({
-      center: [p.lng, p.lat], zoom: key === "palazzo" ? 17 : 15, pitch: 62,
-      bearing: VIEW_BEARING - 8, padding: freePadding()
-    }, 2200, easeInOut);
-  }
-
-  function skip() {
-    if (phase !== "flight" && phase !== "arrive") return;
-    cancelAnimationFrame(raf);
-    overview(true);
-  }
+  /* ---------- apertura e chiusura ---------- */
+  let warm = null;
 
   function showFail() {
     phase = "fail";
@@ -768,13 +850,14 @@
     if (!overlay || !overlay.classList.contains("open")) return;
     phase = "idle";
     cancelAnimationFrame(raf);
-    clearStops();
+    if (warm) { warm.stop(); warm = null; }
     if (heartMarker) { heartMarker.remove(); heartMarker = null; }
+    hidePalazzoMarker();
     if (map) { try { map.remove(); } catch {} map = null; }
-    palazzoState = null;
+    palazzoState = palazzoCenter = null;
     delete overlay.dataset.palazzo;
-    overlay.classList.remove("open", "has-card", "near");
-    ["voloCard", "voloSkip", "voloLoading"].forEach(id => ui(id).classList.remove("show"));
+    overlay.classList.remove("open", "arrived");
+    ["voloBar", "voloSkip", "voloLoading"].forEach(id => ui(id).classList.remove("show"));
     document.body.style.overflow = prevOverflow;
     if (trip && trip.returnFocus && trip.returnFocus.focus) trip.returnFocus.focus();
   }
@@ -784,11 +867,7 @@
     overlay = buildOverlay();
     ui("voloClose").addEventListener("click", close);
     ui("voloSkip").addEventListener("click", skip);
-    ui("voloReplay").addEventListener("click", () => { if (map && trip) fly(); });
-    overlay.addEventListener("click", e => {
-      const b = e.target.closest(".volo-stop");
-      if (b) focusStop(b.dataset.stop);
-    });
+    ui("voloReplay").addEventListener("click", () => { if (map && trip && phase === "arrived") fly(); });
     addEventListener("keydown", e => {
       if (e.key === "Escape" && overlay.classList.contains("open")) {
         e.stopPropagation();
@@ -803,10 +882,11 @@
     ui("voloFail").hidden = true;
     ui("voloFailLink").href = directionsUrl(directionsFrom);
     ui("voloDirections").href = directionsUrl(directionsFrom);
-    ui("voloCard").classList.remove("show");
-    overlay.classList.remove("has-card");
+    ui("voloBar").classList.remove("show");
+    overlay.classList.remove("arrived");
     ui("voloSkip").classList.remove("show");
     ui("voloLoading").classList.add("show");
+    ui("voloEyebrow").textContent = "Il vostro viaggio";
     ui("voloTitle").innerHTML = `Da ${escapeHtml(origin.label)}<br><em>a San Nicola Arcella</em>`;
 
     prevOverflow = document.body.style.overflow;
@@ -815,14 +895,14 @@
     ui("voloClose").focus({ preventScroll: true });
     phase = "loading";
 
-    const km = distanceKm(origin, PLACES.palazzo);
+    const km = distanceKm(origin, PALAZZO);
     ui("voloSub").textContent = km < 3
       ? "Siete già praticamente arrivati"
       : `${Math.round(km).toLocaleString("it-IT")} km in linea d'aria`;
 
     try {
       if (!supportsWebGL()) throw new Error("no webgl");
-      const routeP = km < 3 ? Promise.resolve(null) : fetchRoute(origin, PLACES.palazzo).catch(() => null);
+      const routeP = km < 3 ? Promise.resolve(null) : fetchRoute(origin, PALAZZO).catch(() => null);
       const ml = await withTimeout(loadMapLibre(), 15000, "maplibre");
       const route = await routeP;
       if (phase !== "loading") return;
@@ -832,10 +912,12 @@
       }
       trip = planTrip(origin, route);
       trip.returnFocus = returnFocus;
+      const still = reduceMotion || km < 3;
+      if (!still) warm = prewarm(trip);
       map = new ml.Map({
         container: ui("voloMap"),
         style: buildStyle(),
-        center: trip.coords[0], zoom: trip.zStart, pitch: 48, bearing: trip.bearing,
+        center: trip.coords[0], zoom: trip.zStart, pitch: 46, bearing: trip.bearing,
         maxPitch: 75,
         pixelRatio: Math.min(2, window.devicePixelRatio || 1),
         attributionControl: false,
@@ -843,21 +925,22 @@
       });
       map.addControl(new ml.AttributionControl({ compact: true }), "bottom-left");
       map.on("error", e => console.warn("[volo]", e && e.error ? e.error.message : e));
-      // se all'inizio c'era solo il volume semplice, appena arrivano i dati si passa alla pianta vera
-      // da vicino il cuore del Palazzo si alza, per lasciar vedere l'edificio
-      map.on("zoom", () => overlay.classList.toggle("near", map.getZoom() > 15.5));
-      // se l'ospite muove la mappa con le dita, la ripresa automatica si ferma
-      map.on("movestart", e => { if (e.originalEvent && phase === "overview") cancelAnimationFrame(raf); });
-      map.on("idle", () => { if (map && palazzoState === "fallback" && map.getLayer("volo-palazzo")) raisePalazzo(false); });
+      // se l'ospite muove la mappa con le dita, il giro automatico si ferma
+      map.on("movestart", e => { if (e.originalEvent && phase === "arrived") cancelAnimationFrame(raf); });
+      // se all'inizio c'era solo il modello "di riserva", appena arrivano i dati si passa alla pianta vera
+      map.on("idle", () => { if (map && palazzoState === "fallback") raisePalazzo(false); });
       // basta che lo stile sia pronto: le tessere arrivano mentre il volo parte
       await withTimeout(new Promise(res => map.once("styledata", res)), 20000, "style");
       if (phase !== "loading") return;
       addRouteLayers();
-      // aspetta le prime tessere della città di partenza, senza bloccare per sempre
-      await withTimeout(new Promise(res => map.once("idle", res)), 5000, "idle").catch(() => {});
+      // aspetta la città di partenza e le prime tessere del percorso, senza bloccare per sempre
+      await Promise.all([
+        withTimeout(new Promise(res => map.once("idle", res)), 5000, "idle").catch(() => {}),
+        warm ? withTimeout(warm.first, 6000, "warm").catch(() => {}) : null
+      ]);
       if (phase !== "loading") return;
       ui("voloLoading").classList.remove("show");
-      if (reduceMotion || km < 3) { showStops(); overview(true); }
+      if (still) settle(true);
       else fly();
     } catch (err) {
       console.warn("[volo] fallback:", err && err.message);
@@ -872,7 +955,7 @@
   /* ---------- API usata da app.js ---------- */
   window.Volo = {
     supported: supportsWebGL,
-    preload() { if (supportsWebGL()) loadMapLibre().catch(() => {}); },
+    preload() { if (supportsWebGL()) { loadMapLibre().catch(() => {}); tileTemplate().catch(() => {}); } },
     async fromQuery(query, opts = {}) {
       const place = await geocode(query);
       if (!place) return { found: false };
