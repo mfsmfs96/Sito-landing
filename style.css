@@ -671,6 +671,8 @@ a{color:inherit}
   font:500 9px/1.3 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);
   transition:opacity .4s var(--ease),transform .4s var(--ease);
 }
+.volo-pin.main .volo-pin-in{transition:transform .6s var(--ease)}
+.volo.near .volo-pin.main .volo-pin-in{transform:translateY(-58px)}
 .volo-pin.active{z-index:3}
 .volo-pin.active .volo-pin-label{opacity:1;transform:translate(-50%,0)}
 .volo-pin-label b{display:block;font:400 16px/1.15 var(--serif);letter-spacing:0;text-transform:none;color:var(--ink)}
