@@ -490,6 +490,19 @@
     };
     make(trip.origin.label, trip.coords[0], "from");
     make("San Nicola Arcella", [PALAZZO.lng, PALAZZO.lat], "to");
+    keepLabelsInside();
+    requestAnimationFrame(keepLabelsInside);
+  }
+  // un nome vicino al bordo scivola verso l'interno, così non viene mai tagliato
+  function keepLabelsInside() {
+    const W = overlay.clientWidth, edge = 12;
+    placeMarkers.forEach(m => {
+      const span = m.getElement().firstChild;
+      span.style.marginLeft = "0px";
+      const r = span.getBoundingClientRect();
+      const shift = r.left < edge ? edge - r.left : r.right > W - edge ? W - edge - r.right : 0;
+      span.style.marginLeft = shift + "px";
+    });
   }
   function hidePlaces() {
     placeMarkers.forEach(m => m.remove());
@@ -562,7 +575,8 @@
     const bar = ui("voloBar");
     return {
       center: [PALAZZO.lng, PALAZZO.lat], zoom: 17.5, pitch: 60,
-      padding: { top: Math.round(headBottom()) + 10, bottom: overlay.clientHeight - bar.offsetTop + 10, left: 0, right: 0 }
+      // sopra il Palazzo c'è il suo nome: si lascia più spazio in alto, così non finisce sotto il titolo
+      padding: { top: Math.round(headBottom()) + 100, bottom: overlay.clientHeight - bar.offsetTop + 10, left: 0, right: 0 }
     };
   }
 

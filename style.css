@@ -573,6 +573,8 @@ a{color:inherit}
   opacity:0;visibility:hidden;transition:opacity .5s var(--ease),visibility .5s;
 }
 .volo.open{opacity:1;visibility:visible}
+/* su iPhone l'altezza segue lo schermo realmente visibile (barre di Safari escluse) */
+@supports(height:100dvh){.volo{bottom:auto;height:100dvh}}
 .volo:not(.open),.volo:not(.open) *{pointer-events:none!important}
 .volo-map{position:absolute;inset:0;width:100%;height:100%}
 .volo-vignette{
@@ -608,12 +610,13 @@ a{color:inherit}
 .volo-loading{
   position:absolute;inset:0;z-index:5;background:var(--paper);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
-  font:italic 400 19px var(--serif);color:var(--ink-soft);
+  text-align:center;font:italic 400 19px var(--serif);color:var(--ink-soft);
   opacity:0;visibility:hidden;transition:opacity .6s var(--ease),visibility .6s;
 }
 .volo-loading.show{opacity:1;visibility:visible}
-.volo-loading p{margin:0}
-.volo-loading-heart svg{width:34px;height:31px;fill:var(--rose);animation:voloBeat 1.3s ease-in-out infinite}
+.volo-loading p{margin:0;width:100%}
+.volo-loading-heart{line-height:0}
+.volo-loading-heart svg{display:block;width:34px;height:31px;fill:var(--rose);animation:voloBeat 1.3s ease-in-out infinite}
 .volo-fail{
   position:absolute;z-index:6;left:50%;top:50%;transform:translate(-50%,-50%);
   width:min(360px,calc(100% - 40px));padding:28px 24px;text-align:center;
