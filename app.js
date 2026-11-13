@@ -212,8 +212,23 @@
   const originGeoBtn = $("#originGeoBtn");
   const originGoBtn = $("#originGoBtn");
 
+  // mezzo di viaggio scelto: auto, treno o aereo
+  let travelMode = "auto";
+  const modeBtns = Array.from(document.querySelectorAll(".mode-btn"));
+  modeBtns.forEach(btn => btn.addEventListener("click", e => {
+    e.stopPropagation();
+    travelMode = btn.dataset.mode;
+    modeBtns.forEach(b => {
+      b.classList.toggle("active", b === btn);
+      b.setAttribute("aria-checked", b === btn ? "true" : "false");
+    });
+  }));
+
   function openDirectionsFrom(origin) {
-    const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(DEST_ADDR)}`;
+    // in aereo si atterra a Lamezia Terme: le indicazioni partono da lì
+    const from = travelMode === "aereo" ? "Aeroporto di Lamezia Terme" : origin;
+    const how = travelMode === "treno" ? "transit" : "driving";
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(from)}&destination=${encodeURIComponent(DEST_ADDR)}&travelmode=${how}`;
     window.open(url, "_blank", "noopener");
   }
 
@@ -237,9 +252,9 @@
       setOriginText(`Cerchiamo "${val}"…`);
       originGoBtn.disabled = true;
       try {
-        const res = await window.Volo.fromQuery(val, { returnFocus: originGoBtn });
+        const res = await window.Volo.fromQuery(val, { returnFocus: originGoBtn, mode: travelMode });
         setOriginText(res.found
-          ? `Buon viaggio da ${res.label}! Alla fine del volo trovate le indicazioni stradali.`
+          ? `Buon viaggio da ${res.label}! Alla fine trovate le indicazioni per arrivare.`
           : `Non troviamo "${val}". Provate con il nome di una città.`);
       } catch {
         setOriginText(`Percorso aperto in Google Maps da "${val}".`);
@@ -262,8 +277,8 @@
         pos => {
           const { latitude, longitude } = pos.coords;
           if (canFly()) {
-            setOriginText("Buon viaggio! Alla fine del volo trovate le indicazioni stradali.");
-            window.Volo.fromCoords(latitude, longitude, { returnFocus: originGeoBtn });
+            setOriginText("Buon viaggio! Alla fine trovate le indicazioni per arrivare.");
+            window.Volo.fromCoords(latitude, longitude, { returnFocus: originGeoBtn, mode: travelMode });
             return;
           }
           setOriginText("Percorso aperto in Google Maps dalla tua posizione attuale.");

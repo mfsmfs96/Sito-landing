@@ -20,6 +20,10 @@
 
   const DIRECTIONS_DEST = "Praia a Mare (CS)";
 
+  // dove si arriva in treno e in aereo: da lì l'ultimo tratto è in auto
+  const SCALEA = { lng: 15.795, lat: 39.812, name: "Scalea" };
+  const LAMEZIA = { lng: 16.2423, lat: 38.9054, name: "Lamezia Terme" };
+
   const PALAZZO = { lng: 15.78241, lat: 39.84513 };
   // la costa guarda a ovest: all'arrivo inquadriamo dal mare verso le colline
   const VIEW_BEARING = 78;
@@ -157,6 +161,122 @@
     const coords = r && r.geometry && r.geometry.coordinates;
     if (!Array.isArray(coords) || coords.length < 2) return null;
     return { coords: coords.concat([[dest.lng, dest.lat]]), km: r.distance / 1000, minutes: r.duration / 60 };
+  }
+
+  /* ---------- in treno: la rete ferroviaria principale, in forma schematica ---------- */
+  // Non esiste un servizio gratuito e affidabile che calcoli i percorsi sui binari, quindi le
+  // linee principali sono disegnate qui a mano, stazione per stazione [lat, lng]. Alla scala
+  // della veduta d'insieme seguono il tracciato reale; l'ultimo tratto, da Scalea, è in auto.
+  const RAIL = {
+    torino: [45.062, 7.678], milano: [45.486, 9.204], genova: [44.417, 8.921], verona: [45.429, 10.982],
+    padova: [45.418, 11.880], venezia: [45.482, 12.232], trieste: [45.657, 13.772], bologna: [44.506, 11.343],
+    firenze: [43.776, 11.248], laspezia: [44.111, 9.813], massa: [44.022, 10.135], viareggio: [43.873, 10.254],
+    pisa: [43.708, 10.398], cecina: [43.310, 10.520], follonica: [42.925, 10.760], grosseto: [42.767, 11.104],
+    orbetello: [42.440, 11.240], civitavecchia: [42.092, 11.793], ladispoli: [41.957, 12.085], roma: [41.901, 12.502],
+    latina: [41.538, 12.946], formia: [41.257, 13.607], minturno: [41.262, 13.727], sessa: [41.200, 13.900],
+    villaliterno: [41.010, 14.073], napoli: [40.853, 14.272], caserta: [41.070, 14.328], benevento: [41.143, 14.771],
+    rimini: [44.064, 12.574], ancona: [43.607, 13.498], sanbenedetto: [42.944, 13.882], pescara: [42.467, 14.209],
+    ortona: [42.350, 14.400], vasto: [42.080, 14.730], termoli: [42.000, 14.995], foggia: [41.465, 15.556],
+    bari: [41.118, 16.870], brindisi: [40.634, 17.940], lecce: [40.345, 18.166], taranto: [40.487, 17.220],
+    metaponto: [40.372, 16.811], sibari: [39.742, 16.455], cosenza: [39.309, 16.243], potenza: [40.632, 15.807],
+    salerno: [40.675, 14.773], battipaglia: [40.607, 14.983], agropoli: [40.354, 15.012], vallo: [40.207, 15.175],
+    ascea: [40.142, 15.186], pisciotta: [40.105, 15.235], centola: [40.085, 15.340], policastro: [40.085, 15.520],
+    sapri: [40.074, 15.630], maratea: [39.998, 15.726], praia: [39.899, 15.787], scalea: [SCALEA.lat, SCALEA.lng],
+    diamante: [39.678, 15.821], cetraro: [39.516, 15.944], paola: [39.360, 16.034], amantea: [39.130, 16.075],
+    lamezia: [38.916, 16.253], vibo: [38.735, 16.165], rosarno: [38.487, 15.978], villasg: [38.218, 15.635],
+    reggio: [38.104, 15.636], messina: [38.186, 15.561], taormina: [37.850, 15.280], catania: [37.507, 15.100],
+    siracusa: [37.069, 15.281], milazzo: [38.220, 15.240], patti: [38.135, 14.965], orlando: [38.155, 14.745],
+    santagata: [38.070, 14.630], cefalu: [38.035, 14.020], termini: [37.985, 13.700], palermo: [38.110, 13.367]
+  };
+  const RAIL_LINES = [
+    "torino milano bologna firenze roma",
+    "milano verona padova venezia trieste", "padova bologna", "verona bologna", "torino genova", "milano genova",
+    "genova laspezia massa viareggio pisa cecina follonica grosseto orbetello civitavecchia ladispoli roma", "pisa firenze",
+    "bologna rimini ancona sanbenedetto pescara ortona vasto termoli foggia bari brindisi lecce",
+    "roma latina formia minturno sessa villaliterno napoli salerno", "napoli caserta benevento foggia",
+    "salerno battipaglia agropoli vallo ascea pisciotta centola policastro sapri maratea praia scalea",
+    "battipaglia potenza metaponto", "bari taranto metaponto sibari cosenza paola",
+    "scalea diamante cetraro paola amantea lamezia vibo rosarno villasg reggio",
+    "villasg messina taormina catania siracusa", "messina milazzo patti orlando santagata cefalu termini palermo"
+  ];
+  const railPoint = id => ({ lng: RAIL[id][1], lat: RAIL[id][0] });
+
+  // dalla stazione più vicina alla partenza fino a Scalea, lungo le linee (cammino più breve)
+  function railPath(origin) {
+    const next = {};
+    RAIL_LINES.forEach(line => {
+      const ids = line.split(" ");
+      for (let i = 1; i < ids.length; i++) {
+        const a = ids[i - 1], b = ids[i], d = distanceKm(railPoint(a), railPoint(b));
+        (next[a] = next[a] || []).push([b, d]);
+        (next[b] = next[b] || []).push([a, d]);
+      }
+    });
+    let start = null, best = Infinity;
+    Object.keys(RAIL).forEach(id => { const d = distanceKm(origin, railPoint(id)); if (d < best) { best = d; start = id; } });
+    const dist = { [start]: 0 }, prev = {}, todo = new Set(Object.keys(RAIL));
+    while (todo.size) {
+      let u = null;
+      todo.forEach(id => { if (dist[id] != null && (u === null || dist[id] < dist[u])) u = id; });
+      if (u === null || u === "scalea") break;
+      todo.delete(u);
+      (next[u] || []).forEach(([v, d]) => { if (dist[v] == null || dist[u] + d < dist[v]) { dist[v] = dist[u] + d; prev[v] = u; } });
+    }
+    const ids = [];
+    for (let id = "scalea"; id; id = prev[id]) ids.unshift(id);
+    let pts = ids.map(id => [RAIL[id][1], RAIL[id][0]]);
+    if (best > 3) pts.unshift([origin.lng, origin.lat]);
+    if (pts.length < 2) pts = [[origin.lng, origin.lat], [SCALEA.lng, SCALEA.lat]];
+    // angoli ammorbiditi, come una vera linea ferroviaria
+    for (let round = 0; round < 2 && pts.length > 2; round++) {
+      const out = [pts[0]];
+      for (let i = 1; i < pts.length; i++) {
+        const a = pts[i - 1], b = pts[i];
+        out.push([a[0] * .75 + b[0] * .25, a[1] * .75 + b[1] * .25], [a[0] * .25 + b[0] * .75, a[1] * .25 + b[1] * .75]);
+      }
+      out.push(pts[pts.length - 1]);
+      pts = out;
+    }
+    return pts;
+  }
+
+  // in aereo: un arco che si allarga verso il mare
+  function flightArc(a, b) {
+    const dx = b.lng - a.lng, dy = b.lat - a.lat;
+    let nx = -dy, ny = dx;                       // perpendicolare alla rotta
+    if (nx > 0 || (nx === 0 && ny > 0)) { nx = -nx; ny = -ny; }   // dal lato di ponente
+    const cx = (a.lng + b.lng) / 2 + nx * .2, cy = (a.lat + b.lat) / 2 + ny * .2;
+    const pts = [];
+    for (let i = 0; i <= 64; i++) {
+      const t = i / 64, u = 1 - t;
+      pts.push([u * u * a.lng + 2 * u * t * cx + t * t * b.lng, u * u * a.lat + 2 * u * t * cy + t * t * b.lat]);
+    }
+    return pts;
+  }
+
+  // Il viaggio secondo il mezzo scelto: il tracciato da disegnare e la frase che lo descrive.
+  async function buildJourney(origin, mode) {
+    const km = distanceKm(origin, PALAZZO);
+    const n = v => Math.round(v).toLocaleString("it-IT");
+    const straight = () => greatCircle(origin, PALAZZO, Math.max(60, Math.min(700, Math.round(km / 2))));
+    if (km < 3) return { full: [[origin.lng, origin.lat], [PALAZZO.lng, PALAZZO.lat]], road: false, sub: "Siete già praticamente arrivati" };
+
+    if (mode === "treno" || mode === "aereo") {
+      const hub = mode === "treno" ? SCALEA : LAMEZIA;
+      const car = await fetchRoute(hub, PALAZZO).catch(() => null);
+      const first = mode === "treno" ? railPath(origin) : flightArc(origin, hub);
+      const last = car ? car.coords : [[PALAZZO.lng, PALAZZO.lat]];
+      const then = car ? `poi ${n(car.km)} km in auto (circa ${formatDrive(car.minutes)})` : "poi l'ultimo tratto in auto";
+      return {
+        full: first.concat(last), road: !!car,
+        via: mode === "aereo" ? hub : null,
+        sub: `${mode === "treno" ? "In treno fino a Scalea" : "In volo fino a Lamezia Terme"} · ${then}`
+      };
+    }
+    const route = await fetchRoute(origin, PALAZZO).catch(() => null);
+    return route
+      ? { full: route.coords, road: true, sub: `${n(route.km)} km di strada · circa ${formatDrive(route.minutes)} in auto` }
+      : { full: straight(), road: false, sub: `${n(km)} km in linea d'aria` };
   }
 
   function cumulative(coords) {
@@ -349,7 +469,7 @@
       </div>
       <div class="volo-bar" id="voloBar">
         <div class="volo-actions">
-          <a class="origin-btn primary" id="voloDirections" target="_blank" rel="noopener">Indicazioni stradali</a>
+          <a class="origin-btn primary" id="voloDirections" target="_blank" rel="noopener">Indicazioni</a>
           <button class="origin-btn" id="voloReplay" type="button">Rivedi il volo</button>
         </div>
         <p class="volo-credits">Mappa <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a> · <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> · <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">© OpenMapTiles</a> · Rilievo <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener">Terrain Tiles</a></p>
@@ -358,8 +478,11 @@
     return el;
   }
 
-  function directionsUrl(origin) {
-    return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(DIRECTIONS_DEST)}`;
+  function directionsUrl(origin, mode) {
+    // in aereo si atterra a Lamezia Terme: le indicazioni partono da lì
+    const from = mode === "aereo" ? "Aeroporto di Lamezia Terme" : origin;
+    const how = mode === "treno" ? "transit" : "driving";
+    return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(from)}&destination=${encodeURIComponent(DIRECTIONS_DEST)}&travelmode=${how}`;
   }
 
   /* ---------- stato ---------- */
@@ -434,16 +557,12 @@
 
   const pointAt = p => alongAt(trip.coords, trip.cum, p);
 
-  function planTrip(origin, route) {
-    const km = distanceKm(origin, PALAZZO);
-    const full = route ? route.coords
-      : greatCircle(origin, PALAZZO, Math.max(60, Math.min(700, Math.round(km / 2))));
-    // per l'animazione basta una versione alleggerita (entro ~20 m dalla strada)
-    const coords = route ? simplify(full, 20) : full;
+  function planTrip(origin, journey) {
+    // per l'animazione basta una versione alleggerita (entro ~20 m dal tracciato)
+    const coords = journey.road ? simplify(journey.full, 20) : journey.full;
     const cum = cumulative(coords);
-    const tripKm = route ? route.km : km;
-    return { origin, km, full, coords, cum, road: !!route,
-      duration: Math.max(6000, Math.min(13000, 4500 + tripKm * 10)) };
+    return { origin, km: distanceKm(origin, PALAZZO), full: journey.full, coords, cum, via: journey.via,
+      duration: Math.max(6000, Math.min(13000, 4500 + cum[cum.length - 1] * 10)) };
   }
 
   // Inquadratura fissa dal mare: partenza e arrivo entrambi visibili, la costa davanti.
@@ -490,6 +609,7 @@
       placeMarkers.push(new maplibregl.Marker({ element: el, anchor: "center" }).setLngLat(coord).addTo(map));
     };
     make(trip.origin.label, trip.coords[0], "from");
+    if (trip.via) make(trip.via.name, [trip.via.lng, trip.via.lat], "via");
     make("San Nicola Arcella", [PALAZZO.lng, PALAZZO.lat], "to");
     keepLabelsInside();
     requestAnimationFrame(keepLabelsInside);
@@ -863,6 +983,7 @@
     overlay.classList.remove("open", "arrived");
     ["voloBar", "voloSkip", "voloLoading"].forEach(id => ui(id).classList.remove("show"));
     document.body.style.overflow = prevOverflow;
+    lockPageZoom(false);
     if (trip && trip.returnFocus && trip.returnFocus.focus) trip.returnFocus.focus();
   }
 
@@ -872,6 +993,8 @@
     ui("voloClose").addEventListener("click", close);
     ui("voloSkip").addEventListener("click", skip);
     ui("voloReplay").addEventListener("click", () => { if (map && trip && phase === "arrived") fly(); });
+    addEventListener("resize", onResize);
+    if (window.visualViewport) window.visualViewport.addEventListener("resize", onResize);
     addEventListener("keydown", e => {
       if (e.key === "Escape" && overlay.classList.contains("open")) {
         e.stopPropagation();
@@ -880,12 +1003,41 @@
     }, true);
   }
 
-  async function start({ origin, directionsFrom, returnFocus }) {
+  // Su iPhone, toccare il campo di testo può lasciare la pagina ingrandita: la mappa finirebbe
+  // in parte fuori dallo schermo. Finché il viaggio è aperto la pagina torna alla scala normale.
+  let viewportMeta = null, viewportOld = null;
+  function lockPageZoom(on) {
+    viewportMeta = viewportMeta || document.querySelector('meta[name="viewport"]');
+    if (!viewportMeta) return;
+    if (on) {
+      if (viewportOld === null) viewportOld = viewportMeta.content;
+      viewportMeta.content = viewportOld + ",maximum-scale=1";
+    } else if (viewportOld !== null) {
+      viewportMeta.content = viewportOld;
+      viewportOld = null;
+    }
+  }
+
+  // se lo schermo cambia (rotazione, barre del browser) l'inquadratura si ricalcola
+  let resizeTimer = 0;
+  function onResize() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (!map || !overlay.classList.contains("open")) return;
+      map.resize();
+      if (phase === "flight") fitRoute();
+      else if (phase === "arrived") map.jumpTo(finalView());
+    }, 150);
+  }
+
+  async function start({ origin, directionsFrom, returnFocus, mode = "auto" }) {
     ensureOverlay();
     trip = null;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    lockPageZoom(true);
     ui("voloFail").hidden = true;
-    ui("voloFailLink").href = directionsUrl(directionsFrom);
-    ui("voloDirections").href = directionsUrl(directionsFrom);
+    ui("voloFailLink").href = directionsUrl(directionsFrom, mode);
+    ui("voloDirections").href = directionsUrl(directionsFrom, mode);
     ui("voloBar").classList.remove("show");
     overlay.classList.remove("arrived");
     ui("voloSkip").classList.remove("show");
@@ -900,21 +1052,16 @@
     phase = "loading";
 
     const km = distanceKm(origin, PALAZZO);
-    ui("voloSub").textContent = km < 3
-      ? "Siete già praticamente arrivati"
-      : `${Math.round(km).toLocaleString("it-IT")} km in linea d'aria`;
+    ui("voloSub").textContent = "";
 
     try {
       if (!supportsWebGL()) throw new Error("no webgl");
-      const routeP = km < 3 ? Promise.resolve(null) : fetchRoute(origin, PALAZZO).catch(() => null);
+      const journeyP = buildJourney(origin, mode);
       const ml = await withTimeout(loadMapLibre(), 15000, "maplibre");
-      const route = await routeP;
+      const journey = await journeyP;
       if (phase !== "loading") return;
-      if (route) {
-        ui("voloSub").textContent =
-          `${Math.round(route.km).toLocaleString("it-IT")} km di strada · circa ${formatDrive(route.minutes)} in auto`;
-      }
-      trip = planTrip(origin, route);
+      ui("voloSub").textContent = journey.sub;
+      trip = planTrip(origin, journey);
       trip.returnFocus = returnFocus;
       const still = reduceMotion || km < 3;
       prewarm();
@@ -961,7 +1108,7 @@
     async fromQuery(query, opts = {}) {
       const place = await geocode(query);
       if (!place) return { found: false };
-      start({ origin: place, directionsFrom: query, returnFocus: opts.returnFocus });
+      start({ origin: place, directionsFrom: query, returnFocus: opts.returnFocus, mode: opts.mode });
       return { found: true, label: place.label };
     },
     async fromCoords(lat, lng, opts = {}) {
@@ -969,7 +1116,7 @@
       start({
         origin: { lat, lng, label: name || "casa vostra" },
         directionsFrom: `${lat},${lng}`,
-        returnFocus: opts.returnFocus
+        returnFocus: opts.returnFocus, mode: opts.mode
       });
     },
     close

@@ -456,7 +456,8 @@ a{color:inherit}
 .origin-btn.primary:hover{opacity:.88}
 .origin-input{
   flex:1;min-width:180px;
-  font:400 13px var(--sans);color:var(--ink);
+  /* 16px: sotto questa misura iPhone ingrandisce la pagina quando si tocca il campo */
+  font:400 16px var(--sans);color:var(--ink);
   padding:8px 12px;border:1px solid var(--border);background:var(--panel);
   transition:border-color .3s var(--ease);
 }
@@ -651,6 +652,8 @@ a{color:inherit}
 }
 .volo-place.from span{bottom:calc(100% + 8px)}
 .volo-place.to span{top:calc(100% + 8px);color:var(--rose-deep);font-style:italic}
+.volo-place.via span{bottom:calc(100% + 8px);font-size:13px;color:var(--ink-soft)}
+.volo-place.via i{width:10px;height:10px;inset:1px;border-width:2px}
 /* il nome del Palazzo, sospeso sopra il tetto */
 .volo-pin{position:relative;width:26px;height:24px;pointer-events:none}
 .volo-pin-in{position:absolute;inset:0;transform:translateY(-78px);animation:voloPinIn .9s var(--ease) backwards}

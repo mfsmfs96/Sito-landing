@@ -202,10 +202,18 @@
             <p class="origin-label">Da dove parti?</p>
             <div class="origin-selector">
               <input type="text" class="origin-input" id="originInput" placeholder="Città o indirizzo di partenza" autocomplete="off">
+            </div>
+            <p class="origin-label">Come viaggi?</p>
+            <div class="origin-selector" id="modeSelector" role="radiogroup" aria-label="Mezzo di viaggio">
+              <button type="button" class="origin-btn mode-btn active" data-mode="auto" role="radio" aria-checked="true">Auto</button>
+              <button type="button" class="origin-btn mode-btn" data-mode="treno" role="radio" aria-checked="false">Treno</button>
+              <button type="button" class="origin-btn mode-btn" data-mode="aereo" role="radio" aria-checked="false">Aereo</button>
+            </div>
+            <div class="origin-selector">
               <button type="button" class="origin-btn" id="originGeoBtn">Usa la mia posizione</button>
               <button type="button" class="origin-btn primary" id="originGoBtn">Guarda il viaggio</button>
             </div>
-            <p class="origin-text" id="originText">Vi accompagniamo in volo fino al Palazzo. Alla fine trovate le indicazioni stradali per Praia a Mare.</p>
+            <p class="origin-text" id="originText">Scegliete da dove partite e come viaggiate: vi mostriamo il percorso fino al Palazzo.</p>
           </div>
         </div>
         <button class="detail-card" data-reveal style="--i:3">
