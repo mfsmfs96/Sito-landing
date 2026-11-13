@@ -212,22 +212,56 @@
   const originGeoBtn = $("#originGeoBtn");
   const originGoBtn = $("#originGoBtn");
 
+  // mezzo di viaggio scelto: auto, treno o aereo
+  let travelMode = "auto";
+  const modeBtns = Array.from(document.querySelectorAll(".mode-btn"));
+  modeBtns.forEach(btn => btn.addEventListener("click", e => {
+    e.stopPropagation();
+    travelMode = btn.dataset.mode;
+    modeBtns.forEach(b => {
+      b.classList.toggle("active", b === btn);
+      b.setAttribute("aria-checked", b === btn ? "true" : "false");
+    });
+  }));
+
   function openDirectionsFrom(origin) {
-    const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(DEST_ADDR)}`;
+    // in aereo si atterra a Salerno: le indicazioni partono da lì
+    const from = travelMode === "aereo" ? "Aeroporto di Salerno Costa d'Amalfi" : origin;
+    const how = travelMode === "treno" ? "transit" : "driving";
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(from)}&destination=${encodeURIComponent(DEST_ADDR)}&travelmode=${how}`;
     window.open(url, "_blank", "noopener");
   }
 
+  const canFly = () => !!(window.Volo && window.Volo.supported());
+  const setOriginText = msg => { if (originText) originText.textContent = msg; };
+
   if (originGoBtn) {
-    originGoBtn.addEventListener("click", e => {
+    originGoBtn.addEventListener("click", async e => {
       e.stopPropagation();
       const val = originInput ? originInput.value.trim() : "";
       if (!val) {
-        if (originText) originText.textContent = "Inserisci prima una città o un indirizzo di partenza.";
+        setOriginText("Inserisci prima una città o un indirizzo di partenza.");
         if (originInput) originInput.focus();
         return;
       }
-      if (originText) originText.textContent = `Percorso aperto in Google Maps da "${val}".`;
-      openDirectionsFrom(val);
+      if (!canFly()) {
+        setOriginText(`Percorso aperto in Google Maps da "${val}".`);
+        openDirectionsFrom(val);
+        return;
+      }
+      setOriginText(`Cerchiamo "${val}"…`);
+      originGoBtn.disabled = true;
+      try {
+        const res = await window.Volo.fromQuery(val, { returnFocus: originGoBtn, mode: travelMode });
+        setOriginText(res.found
+          ? `Buon viaggio da ${res.label}! Alla fine trovate le indicazioni per arrivare.`
+          : `Non troviamo "${val}". Provate con il nome di una città.`);
+      } catch {
+        setOriginText(`Percorso aperto in Google Maps da "${val}".`);
+        openDirectionsFrom(val);
+      } finally {
+        originGoBtn.disabled = false;
+      }
     });
   }
 
@@ -235,15 +269,20 @@
     originGeoBtn.addEventListener("click", e => {
       e.stopPropagation();
       if (!navigator.geolocation) {
-        if (originText) originText.textContent = "La geolocalizzazione non è supportata su questo dispositivo.";
+        setOriginText("La geolocalizzazione non è supportata su questo dispositivo.");
         return;
       }
-      if (originText) originText.textContent = "Rilevamento della posizione in corso…";
+      setOriginText("Rilevamento della posizione in corso…");
       navigator.geolocation.getCurrentPosition(
         pos => {
-          const coords = `${pos.coords.latitude},${pos.coords.longitude}`;
-          if (originText) originText.textContent = "Percorso aperto in Google Maps dalla tua posizione attuale.";
-          openDirectionsFrom(coords);
+          const { latitude, longitude } = pos.coords;
+          if (canFly()) {
+            setOriginText("Buon viaggio! Alla fine trovate le indicazioni per arrivare.");
+            window.Volo.fromCoords(latitude, longitude, { returnFocus: originGeoBtn, mode: travelMode });
+            return;
+          }
+          setOriginText("Percorso aperto in Google Maps dalla tua posizione attuale.");
+          openDirectionsFrom(`${latitude},${longitude}`);
         },
         () => {
           if (originText) originText.textContent = "Non è stato possibile accedere alla tua posizione. Prova a scrivere la città manualmente.";
@@ -254,6 +293,8 @@
   }
 
   if (originInput) {
+    // scarica la mappa in anticipo appena l'ospite inizia a scrivere
+    originInput.addEventListener("focus", () => window.Volo && window.Volo.preload(), { once: true });
     originInput.addEventListener("click", e => e.stopPropagation());
     originInput.addEventListener("keydown", e => {
       if (e.key === "Enter") {
@@ -304,7 +345,7 @@
   if (!reduceMotion) {
     const PETAL_COLORS = ["var(--rose)", "var(--rose-soft)", "var(--rose-deep)"];
     document.addEventListener("click", e => {
-      if (e.target.closest("input, textarea, select, #rsvpModal, #detailFull")) return;
+      if (e.target.closest("input, textarea, select, #rsvpModal, #detailFull, #volo")) return;
       const count = 5 + Math.floor(Math.random() * 3);
       for (let i = 0; i < count; i++) {
         const petal = document.createElement("i");

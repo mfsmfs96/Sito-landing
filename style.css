@@ -456,7 +456,8 @@ a{color:inherit}
 .origin-btn.primary:hover{opacity:.88}
 .origin-input{
   flex:1;min-width:180px;
-  font:400 13px var(--sans);color:var(--ink);
+  /* 16px: sotto questa misura iPhone ingrandisce la pagina quando si tocca il campo */
+  font:400 16px var(--sans);color:var(--ink);
   padding:8px 12px;border:1px solid var(--border);background:var(--panel);
   transition:border-color .3s var(--ease);
 }
@@ -563,4 +564,117 @@ a{color:inherit}
   [data-reveal]{transition:none;opacity:1;transform:none}
   .scene .bg{transition:none}
   .scroll-cue i::after{animation:none}
+}
+
+/* ===================================================================
+   Arrivo in volo 3D (volo.js)
+   =================================================================== */
+.volo{
+  position:fixed;inset:0;z-index:300;background:var(--paper);
+  opacity:0;visibility:hidden;transition:opacity .5s var(--ease),visibility .5s;
+}
+.volo.open{opacity:1;visibility:visible}
+/* su iPhone l'altezza segue lo schermo realmente visibile (barre di Safari escluse) */
+@supports(height:100dvh){.volo{bottom:auto;height:100dvh}}
+.volo:not(.open),.volo:not(.open) *{pointer-events:none!important}
+.volo-map{position:absolute;inset:0;width:100%;height:100%}
+.volo-vignette{
+  position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:
+    linear-gradient(to bottom,rgba(249,245,236,.94) 0,rgba(249,245,236,.55) 150px,rgba(249,245,236,0) 260px),
+    radial-gradient(ellipse at center,rgba(249,245,236,0) 60%,rgba(249,245,236,.35) 100%);
+}
+.volo-head{
+  position:absolute;z-index:3;pointer-events:none;
+  top:calc(env(safe-area-inset-top) + 24px);left:clamp(20px,5vw,52px);right:72px;
+}
+.volo-head h2{
+  font:300 clamp(30px,6vw,48px)/1.04 var(--serif);color:var(--ink);margin:10px 0 8px;
+}
+.volo-head h2 em{font-style:italic;color:var(--rose-deep)}
+.volo-sub{font:500 11px/1.4 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft);margin:0}
+.volo-close{
+  position:absolute;z-index:6;top:calc(env(safe-area-inset-top) + 14px);right:clamp(10px,3vw,30px);
+  width:44px;height:44px;background:none;border:0;color:var(--ink-soft);font-size:34px;line-height:1;cursor:pointer;
+}
+.volo-close:hover{color:var(--rose-deep)}
+.volo-close:focus{outline:none}
+.volo-close:focus-visible{outline:1px solid var(--rose-dim);outline-offset:-4px}
+.volo-skip{
+  position:absolute;z-index:4;right:clamp(16px,4vw,40px);bottom:calc(env(safe-area-inset-bottom) + 24px);
+  font:500 11px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--rose-deep);
+  padding:11px 18px;border:1px solid var(--rose-dim);background:rgba(255,253,249,.8);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;
+  opacity:0;pointer-events:none;transition:opacity .4s var(--ease);
+}
+.volo-skip.show{opacity:1;pointer-events:auto}
+.volo-loading{
+  position:absolute;inset:0;z-index:5;background:var(--paper);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  text-align:center;font:italic 400 19px var(--serif);color:var(--ink-soft);
+  opacity:0;visibility:hidden;transition:opacity .6s var(--ease),visibility .6s;
+}
+.volo-loading.show{opacity:1;visibility:visible}
+.volo-loading p{margin:0;width:100%}
+.volo-loading-heart{line-height:0}
+.volo-loading-heart svg{display:block;width:34px;height:31px;fill:var(--rose);animation:voloBeat 1.3s ease-in-out infinite}
+.volo-fail{
+  position:absolute;z-index:6;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(360px,calc(100% - 40px));padding:28px 24px;text-align:center;
+  background:var(--panel);border:1px solid var(--border);box-shadow:0 24px 60px rgba(70,57,45,.16);
+  font:400 18px/1.5 var(--serif);color:var(--ink-soft);
+}
+.volo-fail[hidden]{display:none}
+.volo-fail p{margin:0 0 16px}
+.volo-fail .origin-btn,.volo-actions .origin-btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;padding:12px 20px}
+/* a fine viaggio: solo due pulsanti, niente altro sopra la mappa */
+.volo-bar{
+  position:absolute;z-index:4;left:0;right:0;bottom:0;
+  padding:44px 20px calc(env(safe-area-inset-bottom) + 16px);text-align:center;
+  background:linear-gradient(to top,rgba(249,245,236,.95) 0,rgba(249,245,236,.8) 55%,rgba(249,245,236,0) 100%);
+  opacity:0;visibility:hidden;transform:translateY(16px);
+  transition:opacity .6s var(--ease),transform .6s var(--ease),visibility .6s;
+}
+.volo-bar.show{opacity:1;visibility:visible;transform:none}
+.volo-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.volo-actions .origin-btn:not(.primary){background:rgba(255,253,249,.85)}
+.volo-credits{margin:12px 0 0;font:400 10px var(--sans);color:var(--ink-soft);opacity:.8}
+.volo-credits a{color:inherit}
+.volo-heart{width:30px;height:27px;filter:drop-shadow(0 4px 8px rgba(70,57,45,.35))}
+.volo-heart span{display:block;width:100%;height:100%}
+.volo-heart svg{display:block;width:100%;height:100%;fill:var(--rose);stroke:var(--panel);stroke-width:2;stroke-linejoin:round;animation:voloBeat 1.3s ease-in-out infinite}
+/* auto, aereo e treno: un po' più grandi, senza battito */
+.volo-heart.car,.volo-heart.plane,.volo-heart.train{width:34px;height:34px}
+.volo-heart.car svg,.volo-heart.plane svg,.volo-heart.train svg{animation:none;stroke-width:1.6;paint-order:stroke}
+/* i due capi del viaggio nella veduta d'insieme */
+.volo-place{position:relative;width:12px;height:12px;pointer-events:none}
+.volo-place i{position:absolute;inset:0;border-radius:50%;background:var(--panel);border:3px solid var(--rose-deep);box-shadow:0 2px 6px rgba(70,57,45,.3)}
+.volo-place span{
+  position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;
+  padding:4px 9px;background:rgba(255,253,249,.94);border:1px solid var(--border);
+  box-shadow:0 4px 12px rgba(70,57,45,.12);font:400 15px/1.2 var(--serif);color:var(--ink);
+}
+.volo-place.from span{bottom:calc(100% + 8px)}
+.volo-place.to span{top:calc(100% + 8px);color:var(--rose-deep);font-style:italic}
+.volo-place.via span{bottom:calc(100% + 8px);font-size:13px;color:var(--ink-soft)}
+.volo-place.via i{width:10px;height:10px;inset:1px;border-width:2px}
+/* il nome del Palazzo, sospeso sopra il tetto */
+.volo-pin{position:relative;width:26px;height:24px;pointer-events:none}
+.volo-pin-in{position:absolute;inset:0;transform:translateY(-78px);animation:voloPinIn .9s var(--ease) backwards}
+.volo-pin i{position:absolute;inset:0;filter:drop-shadow(0 4px 8px rgba(70,57,45,.35))}
+.volo-pin i svg{position:absolute;inset:0;width:100%;height:100%;fill:var(--rose);stroke:var(--panel);stroke-width:2}
+.volo-pin-label{
+  position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);
+  padding:7px 12px;background:rgba(255,253,249,.96);border:1px solid var(--border);
+  box-shadow:0 6px 18px rgba(70,57,45,.14);white-space:nowrap;text-align:center;
+  font:500 9px/1.3 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);
+}
+.volo-pin-label b{display:block;font:400 17px/1.15 var(--serif);letter-spacing:0;text-transform:none;color:var(--ink)}
+.volo .maplibregl-ctrl-bottom-left{bottom:calc(env(safe-area-inset-bottom) + 4px)}
+.volo .maplibregl-ctrl-attrib{font:400 10px var(--sans);background:rgba(255,253,249,.7)}
+.volo.arrived .maplibregl-ctrl-bottom-left{opacity:0;pointer-events:none}
+@keyframes voloBeat{0%,100%{transform:scale(1)}18%{transform:scale(1.14)}36%{transform:scale(.98)}54%{transform:scale(1.08)}}
+@keyframes voloPinIn{from{opacity:0;transform:translateY(-96px)}to{opacity:1;transform:translateY(-78px)}}
+@media(prefers-reduced-motion:reduce){
+  .volo-heart svg,.volo-loading-heart svg,.volo-pin-in{animation:none}
 }
