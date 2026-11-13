@@ -2,7 +2,7 @@
    Massimo & Lucrezia — 4 Luglio 2027
    =================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Jost:wght@300;400;500;600&display=swap');
 
 :root{
   --ink:#46392d;
@@ -122,6 +122,38 @@ a{color:inherit}
   0%{transform:translate(-50%,-50%) translate(0,0) rotate(0deg);opacity:.9}
   100%{transform:translate(-50%,-50%) translate(var(--dx),var(--fall)) rotate(var(--rot));opacity:0}
 }
+
+/* ---------- cartoncino di apertura ---------- */
+.intro{
+  position:fixed;z-index:150;top:0;left:0;right:0;bottom:0;background:#f2ebe3;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;text-align:center;overflow:hidden;
+  transition:opacity .9s var(--ease),visibility .9s;
+}
+@supports(height:100dvh){.intro{bottom:auto;height:100dvh}}
+.intro.hide{opacity:0;visibility:hidden;pointer-events:none}
+.intro-text{
+  position:relative;z-index:2;width:100%;flex:none;
+  padding:calc(env(safe-area-inset-top) + clamp(18px,7vh,72px)) 22px 0;
+}
+.intro-names{font:700 clamp(26px,min(6.2vw,7.6vh),60px)/1.12 var(--serif);color:#6b5747;margin:0}
+.intro-names span{display:block;font-weight:500;font-size:.76em;line-height:1.2}
+.intro-phrase{font:400 clamp(17px,min(3.6vw,4.6vh),36px)/1.35 var(--serif);color:var(--ink);margin:clamp(8px,2.4vh,24px) 0 0}
+.intro-date{
+  font:500 clamp(12px,min(2.2vw,3vh),24px)/1 var(--serif);color:#6b5747;text-transform:uppercase;
+  letter-spacing:.34em;padding-left:.34em;margin:clamp(10px,3vh,30px) 0 0;font-variant-numeric:lining-nums;
+}
+/* l'acquerello del Palazzo riempie lo spazio che resta sotto il testo, sfumato nella carta */
+.intro-art{
+  position:relative;z-index:1;order:2;flex:1;min-height:0;width:100%;margin-top:clamp(4px,1.5vh,16px);
+  background:url(assets/social-share.jpg) center 42%/cover no-repeat;mix-blend-mode:multiply;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 30%);mask-image:linear-gradient(to bottom,transparent 0,#000 30%);
+}
+.intro-enter{
+  position:absolute;z-index:3;left:50%;transform:translateX(-50%);white-space:nowrap;
+  bottom:calc(env(safe-area-inset-bottom) + clamp(12px,5vh,44px));
+  background:rgba(255,253,249,.9);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+@media(max-height:480px){.intro-enter{padding:10px 18px}}
 
 /* ---------- loader ---------- */
 #loader{

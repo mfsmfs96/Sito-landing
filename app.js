@@ -14,6 +14,31 @@
   const glow     = $("#glow");
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  /* ---------- cartoncino di apertura ---------- */
+  // Chi apre il link vede prima l'annuncio a tutto schermo; un tocco (o Invio) fa entrare nel sito.
+  // Nella stessa visita compare una volta sola.
+  const intro = $("#intro");
+  if (intro) {
+    let seen = false;
+    try { seen = sessionStorage.getItem("introSeen") === "1"; } catch {}
+    if (seen) {
+      intro.remove();
+    } else {
+      document.body.style.overflow = "hidden";
+      const enter = () => {
+        if (intro.classList.contains("hide")) return;
+        try { sessionStorage.setItem("introSeen", "1"); } catch {}
+        intro.classList.add("hide");
+        document.body.style.overflow = "";
+        removeEventListener("keydown", onKey);
+        setTimeout(() => intro.remove(), 1000);
+      };
+      const onKey = e => { if (e.key === "Enter" || e.key === " " || e.key === "Escape") { e.preventDefault(); enter(); } };
+      intro.addEventListener("click", enter);
+      addEventListener("keydown", onKey);
+    }
+  }
+
   /* ---------- loader ---------- */
   addEventListener("load", () => {
     setTimeout(() => {
