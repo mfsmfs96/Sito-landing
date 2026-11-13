@@ -392,7 +392,8 @@
         <span class="volo-pin-label"><b>Palazzo dei Principi Lanza</b>San Nicola Arcella</span>
         <i>${HEART}</i>
       </div>`;
-    palazzoMarker = new maplibregl.Marker({ element: el, anchor: "center", opacityWhenCovered: "1" })
+    // senza arrotondamento al pixel: mentre la camera gira intorno al Palazzo il nome resta fermo, non trema
+    palazzoMarker = new maplibregl.Marker({ element: el, anchor: "center", subpixelPositioning: true })
       .setLngLat(palazzoCenter || [PALAZZO.lng, PALAZZO.lat]).addTo(map);
   }
   function hidePalazzoMarker() {
