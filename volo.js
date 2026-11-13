@@ -1,7 +1,8 @@
 /* ===================================================================
    Arrivo in volo 3D
-   "Da dove parti?" diventa un volo animato dalla città dell'ospite
-   fino al Palazzo, che all'arrivo sorge in 3D dalla mappa.
+   "Da dove parti?" diventa una veduta dal mare con la città dell'ospite e
+   San Nicola Arcella: un cuore disegna la strada che le unisce, poi la
+   camera scende sul Palazzo, che sorge in 3D dalla mappa.
    MapLibre GL viene caricato solo quando qualcuno avvia il volo.
    =================================================================== */
 (() => {
@@ -22,6 +23,8 @@
   const PALAZZO = { lng: 15.78241, lat: 39.84513 };
   // la costa guarda a ovest: all'arrivo inquadriamo dal mare verso le colline
   const VIEW_BEARING = 78;
+  // il viaggio si guarda da lontano, dal Tirreno verso la costa italiana
+  const SEA_BEARING = 58, SEA_PITCH = 50;
 
   const C = {
     paper: "#f3ebdc", paper2: "#efe4d0", panel: "#fffdf9",
@@ -429,15 +432,6 @@
   }
 
   const pointAt = p => alongAt(trip.coords, trip.cum, p);
-  const zoomAt = s => trip.zStart + (trip.zEnd - trip.zStart) * s - trip.arc * Math.sin(Math.PI * s);
-
-  // partenza e frenata dolci, velocità costante nel mezzo
-  function easeCruise(t) {
-    const a = .14, k = 1 / (1 - a);
-    if (t < a) return k * t * t / (2 * a);
-    if (t > 1 - a) return 1 - k * (1 - t) * (1 - t) / (2 * a);
-    return k * (t - a / 2);
-  }
 
   function planTrip(origin, route) {
     const km = distanceKm(origin, PALAZZO);
@@ -446,40 +440,65 @@
     // per l'animazione basta una versione alleggerita (entro ~20 m dalla strada)
     const coords = route ? simplify(full, 20) : full;
     const cum = cumulative(coords);
-    const w = Math.max(320, overlay.clientWidth || innerWidth);
-    const midLat = (origin.lat + PALAZZO.lat) / 2;
-    // zoom alla quale la tratta occupa circa metà della larghezza dello schermo
-    const zFit = Math.log2(156543 * Math.cos(toRad(midLat)) * w / Math.max(1, km * 1000 * .55));
-    const zStart = 11, zEnd = 13.2;
-    // seguendo le strade si resta un po' più bassi, così il percorso si legge
-    const zMid = Math.max(3, Math.min(zFit + (route ? 1 : 0), 10.5));
-    const arc = Math.max(0, (zStart + zEnd) / 2 - zMid);
-    const t = { origin, km, full, coords, cum, zStart, zEnd, arc, road: !!route,
-      bearing: bearingDeg(coords[0], alongAt(coords, cum, .03)) };
-
-    // Velocità costante *sullo schermo*: dall'alto si corre, vicino a terra si rallenta.
-    // Per ogni tratto si calcola quanti pixel occupa alla quota prevista; il tempo segue i pixel.
-    const N = 400, totalM = cum[cum.length - 1] * 1000, mpp0 = 78271.5 * Math.cos(toRad(midLat));
-    const z = s => zStart + (zEnd - zStart) * s - arc * Math.sin(Math.PI * s);
-    const px = [0];
-    for (let i = 1; i <= N; i++) px.push(px[i - 1] + (totalM / N) / (mpp0 / 2 ** z((i - .5) / N)));
-    t.px = px;
-    t.duration = Math.max(10000, Math.min(24000, px[N] / 380 * 1000));
-    return t;
+    const tripKm = route ? route.km : km;
+    return { origin, km, full, coords, cum, road: !!route,
+      duration: Math.max(6000, Math.min(13000, 4500 + tripKm * 10)) };
   }
 
-  // frazione di percorso raggiunta alla frazione di tempo u
-  function progressAt(u) {
-    const px = trip.px, N = px.length - 1, target = u * px[N];
-    let lo = 0, hi = N;
-    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (px[mid] <= target) lo = mid; else hi = mid; }
-    const seg = px[hi] - px[lo];
-    return (lo + (seg > 0 ? (target - px[lo]) / seg : 0)) / N;
+  // Inquadratura fissa dal mare: partenza e arrivo entrambi visibili, la costa davanti.
+  // Si parte da una stima e si corregge finché tutto il percorso sta nello spazio libero.
+  function fitRoute() {
+    const W = overlay.clientWidth, H = overlay.clientHeight;
+    // margini larghi ai lati: sotto i due punti ci sono i nomi dei luoghi
+    const side = Math.min(90, W * .2);
+    const area = { x0: side, x1: W - side, y0: Math.round(headBottom()) + 56, y1: H - 110 };
+    const pts = [];
+    for (let i = 0; i <= 60; i++) pts.push(pointAt(i / 60));
+    const bounds = new maplibregl.LngLatBounds();
+    pts.forEach(p => bounds.extend([p[0], p[1]]));
+    const zero = { top: 0, bottom: 0, left: 0, right: 0 };
+    map.setPadding(zero);
+    const cam = map.cameraForBounds(bounds, { bearing: SEA_BEARING, padding: 40 });
+    let zoom = Math.min(12, cam ? cam.zoom + .4 : 6);
+    let center = cam ? [cam.center.lng, cam.center.lat] : [pts[30][0], pts[30][1]];
+    for (let i = 0; i < 40; i++) {
+      map.jumpTo({ center, zoom, pitch: SEA_PITCH, bearing: SEA_BEARING, padding: zero });
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+      pts.forEach(p => {
+        const q = map.project([p[0], p[1]]);
+        x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y);
+      });
+      const fits = x1 - x0 <= area.x1 - area.x0 && y1 - y0 <= area.y1 - area.y0;
+      const dx = (x0 + x1) / 2 - (area.x0 + area.x1) / 2, dy = (y0 + y1) / 2 - (area.y0 + area.y1) / 2;
+      if (fits && Math.abs(dx) < 3 && Math.abs(dy) < 3) break;
+      if (!fits) zoom -= .12;
+      const c = map.unproject([W / 2 + dx, H / 2 + dy]);
+      center = [c.lng, c.lat];
+    }
   }
 
-  /* ---------- mappa pronta prima di passarci sopra ---------- */
-  // Scarica in anticipo le tessere lungo il percorso: quando il volo ci arriva sono già
-  // nella memoria del browser e la mappa non resta bianca.
+  // i due capi del viaggio, con il loro nome
+  let placeMarkers = [];
+  function showPlaces() {
+    hidePlaces();
+    const make = (name, coord, cls) => {
+      const el = document.createElement("div");
+      el.className = "volo-place " + cls;
+      el.innerHTML = `<span></span><i></i>`;
+      el.firstChild.textContent = name;
+      placeMarkers.push(new maplibregl.Marker({ element: el, anchor: "center" }).setLngLat(coord).addTo(map));
+    };
+    make(trip.origin.label, trip.coords[0], "from");
+    make("San Nicola Arcella", [PALAZZO.lng, PALAZZO.lat], "to");
+  }
+  function hidePlaces() {
+    placeMarkers.forEach(m => m.remove());
+    placeMarkers = [];
+  }
+
+  /* ---------- mappa pronta prima di arrivarci ---------- */
+  // Scarica in anticipo i dettagli intorno al Palazzo: quando la camera scende sono già
+  // nella memoria del browser.
   let tileTemplateP = null;
   function tileTemplate() {
     if (!tileTemplateP) {
@@ -495,38 +514,15 @@
     return [Math.floor((lng + 180) / 360 * n), Math.floor(y)];
   }
 
-  function prewarm(t) {
-    const keys = new Set(), r = (overlay.clientWidth || innerWidth) > 900 ? 2 : 1;
-    const z = s => t.zStart + (t.zEnd - t.zStart) * s - t.arc * Math.sin(Math.PI * s);
-    for (let i = 0; i <= 300 && keys.size < 260; i++) {
-      const s = i / 300, pos = alongAt(t.coords, t.cum, s);
-      const tz = Math.max(0, Math.min(14, Math.floor(z(s))));
-      const [x, y] = tileOf(pos[0], pos[1], tz);
-      for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) keys.add(`${tz}/${x + dx}/${y + dy}`);
+  function prewarm() {
+    const keys = [];
+    for (let z = 9; z <= 14; z++) {
+      const [x, y] = tileOf(PALAZZO.lng, PALAZZO.lat, z), r = z === 14 ? 1 : 0;
+      for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) keys.push([z, x + dx, y + dy]);
     }
-    // i dettagli intorno al Palazzo, per l'arrivo
-    const [px, py] = tileOf(PALAZZO.lng, PALAZZO.lat, 14);
-    for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) keys.add(`14/${px + dx}/${py + dy}`);
-
-    const list = [...keys];
-    let done = 0, next = 0, alive = true;
-    const first = new Promise(resolve => {
-      tileTemplate().then(tpl => {
-        const urls = k => {
-          const [tz, x, y] = k.split("/");
-          const fill = u => u.replace("{z}", tz).replace("{x}", x).replace("{y}", y);
-          return [fill(tpl), fill(DEM)];
-        };
-        const worker = () => {
-          if (!alive || next >= list.length) return;
-          const k = list[next++];
-          Promise.all(urls(k).map(u => fetch(u).then(res => res.arrayBuffer()).catch(() => {})))
-            .then(() => { if (++done >= Math.min(list.length, 60)) resolve(); worker(); });
-        };
-        for (let i = 0; i < 8; i++) worker();
-      }).catch(resolve);
-    });
-    return { first, stop() { alive = false; } };
+    tileTemplate().then(tpl => keys.forEach(([z, x, y]) => [tpl, DEM].forEach(u =>
+      fetch(u.replace("{z}", z).replace("{x}", x).replace("{y}", y)).then(r => r.arrayBuffer()).catch(() => {})
+    ))).catch(() => {});
   }
 
   /* ---------- movimenti di camera ---------- */
@@ -537,8 +533,11 @@
     const c1 = to.center || [c0.lng, c0.lat];
     const z1 = to.zoom ?? z0, p1 = to.pitch ?? p0, pad1 = to.padding || pad0;
     const db = to.bearing == null ? 0 : ((to.bearing - b0 + 540) % 360) - 180;
+    // scendendo di molto, il centro si sposta in proporzione alla scala: il bersaglio resta in vista
+    const dz = z1 - z0;
+    const kc = k => Math.abs(dz) < .01 ? k : (1 - 2 ** (-dz * k)) / (1 - 2 ** (-dz));
     const frame = k => map.jumpTo({
-      center: [c0.lng + (c1[0] - c0.lng) * k, c0.lat + (c1[1] - c0.lat) * k],
+      center: [c0.lng + (c1[0] - c0.lng) * kc(k), c0.lat + (c1[1] - c0.lat) * kc(k)],
       zoom: z0 + (z1 - z0) * k, pitch: p0 + (p1 - p0) * k, bearing: b0 + db * k,
       padding: {
         top: pad0.top + (pad1.top - pad0.top) * k, bottom: pad0.bottom + (pad1.bottom - pad0.bottom) * k,
@@ -578,34 +577,23 @@
     ui("voloEyebrow").textContent = "Il vostro viaggio";
     collapseAttribution();
 
+    cancelAnimationFrame(raf);
+    fitRoute();
+    showPlaces();
     setProgress(0, true);
-    if (!heartMarker) heartMarker = new maplibregl.Marker({ element: makeHeart(), anchor: "center", opacityWhenCovered: "1" });
+    if (!heartMarker) heartMarker = new maplibregl.Marker({ element: makeHeart(), anchor: "center" });
     heartMarker.setLngLat(trip.coords[0]).addTo(map);
 
-    map.setPadding({ top: Math.round(headBottom() * .6), bottom: 0, left: 0, right: 0 });
-    let bearing = trip.bearing, last = 0;
-    map.jumpTo({ center: trip.coords[0], zoom: trip.zStart, pitch: 46, bearing });
-
-    // breve pausa sulla città di partenza prima del decollo
+    // la camera resta ferma: si muove solo il cuore, che disegna la strada
     const t0 = performance.now() + 900;
-    cancelAnimationFrame(raf);
     const step = now => {
       if (phase !== "flight") return;
       const t = Math.max(0, Math.min(1, (now - t0) / trip.duration));
-      const s = progressAt(easeCruise(t));
-      const pos = pointAt(s);
-      setProgress(s);
-      heartMarker.setLngLat(pos);
-
-      // direzione di marcia su un tratto lungo, così i tornanti non fanno girare la testa
-      const k = last ? 1 - Math.exp(-(now - last) / 700) : 0;
-      last = now;
-      if (s < .97) bearing = lerpAngle(bearing, bearingDeg(pointAt(s - .03), pointAt(s + .03)), k);
-      // il cuore resta sempre al centro dello schermo
-      map.jumpTo({ center: [pos[0], pos[1]], zoom: zoomAt(s), pitch: 46 + 10 * Math.sin(Math.PI * s), bearing });
-
+      const s = easeSine(t);
+      setProgress(s, t >= 1);
+      heartMarker.setLngLat(pointAt(s));
       if (t < 1) raf = requestAnimationFrame(step);
-      else arrive();
+      else setTimeout(() => { if (phase === "flight") arrive(); }, 500);
     };
     raf = requestAnimationFrame(step);
   }
@@ -622,8 +610,10 @@
     ui("voloEyebrow").textContent = "Benvenuti in Calabria";
     setProgress(1);
     heartMarker && heartMarker.remove();
+    hidePlaces();
     const view = finalView();
-    tween({ ...view, bearing: VIEW_BEARING + 14 }, 5200, easeInOut, () => {
+    // dalla veduta d'insieme giù fino al Palazzo
+    tween({ ...view, bearing: VIEW_BEARING + 14 }, 6500, easeInOut, () => {
       // aspetta un attimo i dettagli degli edifici, poi il Palazzo sorge mentre la camera gli gira intorno
       const since = performance.now();
       const wait = () => {
@@ -644,6 +634,7 @@
     ui("voloEyebrow").textContent = "Benvenuti in Calabria";
     setProgress(1);
     heartMarker && heartMarker.remove();
+    hidePlaces();
     ui("voloBar").classList.add("show");
     overlay.classList.add("arrived");
     collapseAttribution();
@@ -837,8 +828,6 @@
   }
 
   /* ---------- apertura e chiusura ---------- */
-  let warm = null;
-
   function showFail() {
     phase = "fail";
     ui("voloLoading").classList.remove("show");
@@ -850,7 +839,7 @@
     if (!overlay || !overlay.classList.contains("open")) return;
     phase = "idle";
     cancelAnimationFrame(raf);
-    if (warm) { warm.stop(); warm = null; }
+    hidePlaces();
     if (heartMarker) { heartMarker.remove(); heartMarker = null; }
     hidePalazzoMarker();
     if (map) { try { map.remove(); } catch {} map = null; }
@@ -913,11 +902,11 @@
       trip = planTrip(origin, route);
       trip.returnFocus = returnFocus;
       const still = reduceMotion || km < 3;
-      if (!still) warm = prewarm(trip);
+      prewarm();
       map = new ml.Map({
         container: ui("voloMap"),
         style: buildStyle(),
-        center: trip.coords[0], zoom: trip.zStart, pitch: 46, bearing: trip.bearing,
+        center: trip.coords[0], zoom: 6, pitch: SEA_PITCH, bearing: SEA_BEARING,
         maxPitch: 75,
         pixelRatio: Math.min(2, window.devicePixelRatio || 1),
         attributionControl: false,
@@ -933,11 +922,9 @@
       await withTimeout(new Promise(res => map.once("styledata", res)), 20000, "style");
       if (phase !== "loading") return;
       addRouteLayers();
-      // aspetta la città di partenza e le prime tessere del percorso, senza bloccare per sempre
-      await Promise.all([
-        withTimeout(new Promise(res => map.once("idle", res)), 5000, "idle").catch(() => {}),
-        warm ? withTimeout(warm.first, 6000, "warm").catch(() => {}) : null
-      ]);
+      // l'inquadratura è già quella del viaggio: si aspetta che la mappa sia tutta disegnata
+      if (!still) fitRoute();
+      await withTimeout(new Promise(res => map.once("idle", res)), 7000, "idle").catch(() => {});
       if (phase !== "loading") return;
       ui("voloLoading").classList.remove("show");
       if (still) settle(true);
