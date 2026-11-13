@@ -562,11 +562,11 @@
     // per l'animazione basta una versione alleggerita (entro ~20 m dal tracciato)
     const coords = journey.road ? simplify(journey.full, 20) : journey.full;
     const cum = cumulative(coords);
-    // fin dove si viaggia in treno o in aereo (poi si prosegue in auto, e torna il cuore)
+    // fin dove si viaggia in treno o in aereo (poi si prosegue in auto)
     const firstCum = journey.first ? cumulative(journey.first) : null;
     const switchAt = firstCum ? Math.min(1, firstCum[firstCum.length - 1] / cumulative(journey.full).pop()) : 0;
     return { origin, km: distanceKm(origin, PALAZZO), full: journey.full, coords, cum, via: journey.via,
-      icon: journey.icon || "heart", switchAt,
+      icon: journey.icon || "car", switchAt,
       duration: Math.max(6000, Math.min(13000, 4500 + cum[cum.length - 1] * 10)) };
   }
 
@@ -723,7 +723,7 @@
     setProgress(0, true);
     if (!heartMarker) heartMarker = new maplibregl.Marker({ element: makeHeart(), anchor: "center" });
     heartMarker.setLngLat(trip.coords[0]).addTo(map);
-    const moverAt = s => (s < trip.switchAt ? trip.icon : "heart");
+    const moverAt = s => (s < trip.switchAt ? trip.icon : "car");
     setMover(moverAt(0));
     if (moverAt(0) === "plane") aimPlane(0);
 
@@ -743,9 +743,9 @@
     raf = requestAnimationFrame(step);
   }
 
-  // ciò che si muove sulla mappa: un aereo, un treno oppure il cuore (in auto)
+  // ciò che si muove sulla mappa: un aereo, un treno oppure un'auto
   const MOVERS = {
-    heart: HEART,
+    car: '<svg viewBox="0 0 32 32" aria-hidden="true"><path fill-rule="evenodd" d="M7.5 13l2-5.5a3 3 0 0 1 2.8-2h7.4a3 3 0 0 1 2.8 2l2 5.5a3 3 0 0 1 2.5 3v6.5a1.5 1.5 0 0 1-1.5 1.5H25v2a1.5 1.5 0 0 1-1.5 1.5h-2A1.5 1.5 0 0 1 20 26v-2h-8v2a1.5 1.5 0 0 1-1.5 1.5h-2A1.5 1.5 0 0 1 7 26v-2h-.5A1.5 1.5 0 0 1 5 22.5V16a3 3 0 0 1 2.5-3zM11 12.5h10l-1.3-4h-7.4zM9.5 16.4a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2zM22.5 16.4a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2z"/></svg>',
     plane: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2c1.3 0 2.2 1.6 2.2 3.6v6.2l10.3 6.4v3l-10.3-3.2v6l3.2 2.4v2.4L16 27.4l-5.4 1.4v-2.4l3.2-2.4v-6L3.5 21.2v-3l10.3-6.4V5.6C13.8 3.6 14.7 2 16 2z"/></svg>',
     train: '<svg viewBox="0 0 32 32" aria-hidden="true"><path fill-rule="evenodd" d="M9 3h14a4 4 0 0 1 4 4v15a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM9.5 8v7h13V8zM11 18.8a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4zM21 18.8a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4z"/><path d="M10.5 26.5l-3 4h3l1.3-1.8h8.4l1.3 1.8h3l-3-4z"/></svg>'
   };
