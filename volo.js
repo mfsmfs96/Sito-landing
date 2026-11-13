@@ -22,7 +22,7 @@
 
   // dove si arriva in treno e in aereo: da lì l'ultimo tratto è in auto
   const SCALEA = { lng: 15.795, lat: 39.812, name: "Scalea" };
-  const LAMEZIA = { lng: 16.2423, lat: 38.9054, name: "Lamezia Terme" };
+  const AIRPORT = { lng: 14.9113, lat: 40.6204, name: "Salerno", full: "Aeroporto di Salerno Costa d'Amalfi" };
 
   const PALAZZO = { lng: 15.78241, lat: 39.84513 };
   // la costa guarda a ovest: all'arrivo inquadriamo dal mare verso le colline
@@ -262,15 +262,16 @@
     if (km < 3) return { full: [[origin.lng, origin.lat], [PALAZZO.lng, PALAZZO.lat]], road: false, sub: "Siete già praticamente arrivati" };
 
     if (mode === "treno" || mode === "aereo") {
-      const hub = mode === "treno" ? SCALEA : LAMEZIA;
+      const hub = mode === "treno" ? SCALEA : AIRPORT;
       const car = await fetchRoute(hub, PALAZZO).catch(() => null);
       const first = mode === "treno" ? railPath(origin) : flightArc(origin, hub);
       const last = car ? car.coords : [[PALAZZO.lng, PALAZZO.lat]];
       const then = car ? `poi ${n(car.km)} km in auto (circa ${formatDrive(car.minutes)})` : "poi l'ultimo tratto in auto";
       return {
-        full: first.concat(last), road: !!car,
+        full: first.concat(last), road: !!car, first,
+        icon: mode === "treno" ? "train" : "plane",
         via: mode === "aereo" ? hub : null,
-        sub: `${mode === "treno" ? "In treno fino a Scalea" : "In volo fino a Lamezia Terme"} · ${then}`
+        sub: `${mode === "treno" ? "In treno fino a Scalea" : "In volo fino a Salerno"} · ${then}`
       };
     }
     const route = await fetchRoute(origin, PALAZZO).catch(() => null);
@@ -479,8 +480,8 @@
   }
 
   function directionsUrl(origin, mode) {
-    // in aereo si atterra a Lamezia Terme: le indicazioni partono da lì
-    const from = mode === "aereo" ? "Aeroporto di Lamezia Terme" : origin;
+    // in aereo si atterra a Salerno: le indicazioni partono da lì
+    const from = mode === "aereo" ? AIRPORT.full : origin;
     const how = mode === "treno" ? "transit" : "driving";
     return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(from)}&destination=${encodeURIComponent(DIRECTIONS_DEST)}&travelmode=${how}`;
   }
@@ -561,7 +562,11 @@
     // per l'animazione basta una versione alleggerita (entro ~20 m dal tracciato)
     const coords = journey.road ? simplify(journey.full, 20) : journey.full;
     const cum = cumulative(coords);
+    // fin dove si viaggia in treno o in aereo (poi si prosegue in auto, e torna il cuore)
+    const firstCum = journey.first ? cumulative(journey.first) : null;
+    const switchAt = firstCum ? Math.min(1, firstCum[firstCum.length - 1] / cumulative(journey.full).pop()) : 0;
     return { origin, km: distanceKm(origin, PALAZZO), full: journey.full, coords, cum, via: journey.via,
+      icon: journey.icon || "heart", switchAt,
       duration: Math.max(6000, Math.min(13000, 4500 + cum[cum.length - 1] * 10)) };
   }
 
@@ -718,6 +723,9 @@
     setProgress(0, true);
     if (!heartMarker) heartMarker = new maplibregl.Marker({ element: makeHeart(), anchor: "center" });
     heartMarker.setLngLat(trip.coords[0]).addTo(map);
+    const moverAt = s => (s < trip.switchAt ? trip.icon : "heart");
+    setMover(moverAt(0));
+    if (moverAt(0) === "plane") aimPlane(0);
 
     // la camera resta ferma: si muove solo il cuore, che disegna la strada
     const t0 = performance.now() + 900;
@@ -727,17 +735,40 @@
       const s = easeSine(t);
       setProgress(s, t >= 1);
       heartMarker.setLngLat(pointAt(s));
+      setMover(moverAt(s));
+      if (moverAt(s) === "plane") aimPlane(s);
       if (t < 1) raf = requestAnimationFrame(step);
       else setTimeout(() => { if (phase === "flight") arrive(); }, 500);
     };
     raf = requestAnimationFrame(step);
   }
 
+  // ciò che si muove sulla mappa: un aereo, un treno oppure il cuore (in auto)
+  const MOVERS = {
+    heart: HEART,
+    plane: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2c1.3 0 2.2 1.6 2.2 3.6v6.2l10.3 6.4v3l-10.3-3.2v6l3.2 2.4v2.4L16 27.4l-5.4 1.4v-2.4l3.2-2.4v-6L3.5 21.2v-3l10.3-6.4V5.6C13.8 3.6 14.7 2 16 2z"/></svg>',
+    train: '<svg viewBox="0 0 32 32" aria-hidden="true"><path fill-rule="evenodd" d="M9 3h14a4 4 0 0 1 4 4v15a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM9.5 8v7h13V8zM11 18.8a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4zM21 18.8a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4z"/><path d="M10.5 26.5l-3 4h3l1.3-1.8h8.4l1.3 1.8h3l-3-4z"/></svg>'
+  };
   function makeHeart() {
     const el = document.createElement("div");
     el.className = "volo-heart";
-    el.innerHTML = HEART;
+    el.innerHTML = `<span>${HEART}</span>`;
     return el;
+  }
+  function setMover(kind) {
+    const el = heartMarker.getElement();
+    if (el.dataset.kind === kind) return;
+    el.dataset.kind = kind;
+    el.className = "volo-heart " + kind;
+    el.firstChild.innerHTML = MOVERS[kind];
+    el.firstChild.style.transform = "";
+  }
+  // l'aereo punta nella direzione in cui vola, così come appare sullo schermo
+  function aimPlane(s) {
+    const a = map.project(pointAt(s)), b = map.project(pointAt(Math.min(1, s + .01)));
+    if (Math.hypot(b.x - a.x, b.y - a.y) < .5) return;
+    const deg = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI + 90;
+    heartMarker.getElement().firstChild.style.transform = `rotate(${deg.toFixed(1)}deg)`;
   }
 
   function arrive() {

@@ -225,8 +225,8 @@
   }));
 
   function openDirectionsFrom(origin) {
-    // in aereo si atterra a Lamezia Terme: le indicazioni partono da lì
-    const from = travelMode === "aereo" ? "Aeroporto di Lamezia Terme" : origin;
+    // in aereo si atterra a Salerno: le indicazioni partono da lì
+    const from = travelMode === "aereo" ? "Aeroporto di Salerno Costa d'Amalfi" : origin;
     const how = travelMode === "treno" ? "transit" : "driving";
     const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(from)}&destination=${encodeURIComponent(DEST_ADDR)}&travelmode=${how}`;
     window.open(url, "_blank", "noopener");
